@@ -44,7 +44,7 @@ for path in Body_keypoints_path:
             X.append(X[-1])
             print(e)
 
-X_train, X_test = train_test_split(X, test_size=0.2)
+X_train, X_test = train_test_split(X, test_size=0.2, shuffle=False)
 
 # 時系列長とステップ幅にしたがって切り出し
 train = [X_train[i:i+args[0].seq_len] for i in range(0, len(X_train), args[0].step_size)]
