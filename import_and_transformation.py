@@ -1,12 +1,9 @@
 import cupy as cp
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
 import glob
 import json
 import argparse
 import pickle
-import sys
 
 
 def extraction_serialnum(filename):  # ファイルパスlist.sort()で使う
@@ -22,6 +19,8 @@ parser.add_argument("--Body_keypoints_dir", default="output_json\\",
                     help="Process a directory of Body keypoints files(.json).")
 parser.add_argument("--train_path", default="train.sav")
 parser.add_argument("--test_path", default="test.sav")
+parser.add_argument("--seq_len", default=100)
+parser.add_argument("--step_size", default=25)
 parser.add_argument("-r", default=10, help="Set frame rate used when extracting keypoints with OpenPose")
 
 args = parser.parse_known_args()
@@ -30,7 +29,6 @@ args = parser.parse_known_args()
 Body_keypoints_path = glob.glob(args[0].Body_keypoints_dir + "*.json")
 Body_keypoints_path.sort(key=extraction_serialnum)
 
-keypoints = []
 X = []
 
 # Body_keypoints(.json)の読み込み
@@ -39,23 +37,22 @@ for path in Body_keypoints_path:
     with open(path, 'r') as f:
         try:
             Bk = json.load(f)
-            X.append(Bk["people"][0]["pose_keypoints_2d"])
+            # keypoint列中の3の倍数個目の要素（推定確率）は使わないため、スキップしてlistにappend
+            X.append([Bk["people"][0]["pose_keypoints_2d"][i] for i in range(75) if i % 3 != 2])
+            # X.append(Bk["people"][0]["pose_keypoints_2d"])
         except Exception as e:
             X.append(X[-1])
             print(e)
 
-l = len(X)
 X_train, X_test = train_test_split(X, test_size=0.2)
 
+# 時系列長とステップ幅にしたがって切り出し
+train = [X_train[i:i+args[0].seq_len] for i in range(0, len(X_train), args[0].step_size)]
+test = [X_test[i:i+args[0].seq_len] for i in range(0, len(X_test), args[0].step_size)]
 
-# 標準化
-scaler = MinMaxScaler().fit(X_train)
-X_train = scaler.transform(X_train)
-X_test = scaler.transform(X_test)
+# 先頭と末尾の要素を除いてndarrayに変換
+X_train = cp.array(train[1:-4], dtype="float32")
+X_test = cp.array(test[1:-4], dtype="float32")
 
-X_train = cp.array(X_train, dtype="float32")
-X_test = cp.array(X_test, dtype="float32")
-
-#print(X_train.shape)
 pickle.dump(X_train, open(args[0].train_path, "wb"))
 pickle.dump(X_test, open(args[0].test_path, "wb"))

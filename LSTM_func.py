@@ -52,7 +52,7 @@ class EncDecAD(chainer.Chain):
         self.encLSTM.reset_state()
         self.decLSTM.reset_state()
 
-
+# Return loss when given minibatch of time-series data
 class LSTM_MSE(L.Classifier):
     def __init__(self, predictor):
         super(LSTM_MSE, self).__init__(predictor)
@@ -169,11 +169,11 @@ class MyEvaluator(extensions.Evaluator):
 
         summary = reporter_module.DictSummary()
 
-        for x_batch, t_batch in it:
+        for x_batch in it:
             observation = {}
             with reporter_module.report_scope(observation):
                 with function.no_backprop_mode():
-                    eval_func(x_batch, t_batch)
+                    eval_func(x_batch)
 
             summary.add(observation)
 
