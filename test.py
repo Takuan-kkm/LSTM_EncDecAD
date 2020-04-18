@@ -1,10 +1,26 @@
-import cupy as cp
+import matplotlib.pyplot as plt
+import matplotlib.collections as mc
+import pickle
 
-print(list(range(0, 140, 25)))
-a = cp.arange(16)
-print(list(range(0, a.shape[0], 5)))
+# データの読み込み
+with open("test.sav", "rb") as f:
+    datum = pickle.load(f)
 
-b = [a[i:i+5] for i in range(0, a.shape[0], 5)]
-c = cp.array(b[1:-1], dtype="float32")
-print(b)
-print(c)
+skelton = datum[0][0]
+
+points = [(skelton[i], skelton[i + 1]) for i in range(0, 50, 2)]
+print(points)
+exit()
+lines = [[(0.1, 0.1), (0.3, 0.1)], [(0.2, 0.5), (0.4, 0.5)]]
+colors = ["chartreuse", "cyan"]
+
+lc = mc.LineCollection(lines, color=colors, linewidths=2)
+
+fig = plt.figure(figsize=(10, 4))
+ax = fig.add_subplot(aspect=9 / 16)
+ax.add_collection(lc)
+ax.autoscale()
+
+plt.xlim([0, 1])
+plt.ylim([0, 1])
+plt.show()
