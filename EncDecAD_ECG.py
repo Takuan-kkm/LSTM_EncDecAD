@@ -1,7 +1,5 @@
 import argparse
 import chainer
-import chainer.functions as F
-import chainer.links as L
 from chainer import training
 from chainer.training import extensions
 from chainer.iterators import SerialIterator
@@ -12,8 +10,6 @@ from LSTM_func import LSTM_Iterator
 from LSTM_func import LSTMUpdater
 from LSTM_func import MyEvaluator
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
 import pandas as pd
 import cupy as cp
 import sys
@@ -94,7 +90,7 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
     # Evaluate the model with the test dataset for each epoch
-    trainer.extend(MyEvaluator(test_iter, model, device=device))
+    trainer.extend(extensions.evaluator(test_iter, model, device=device))
 
     # Take a snapshot for each specified epoch
     frequency = args.epoch if args.frequency == -1 else max(1, args.frequency)
