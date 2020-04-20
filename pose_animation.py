@@ -50,14 +50,14 @@ def seq_to_png(seq, temp="temp"):
         i += 1
 
 
-def make_gifanime(n_img, dir="temp"):
+def make_gifanime(n_img, dir="temp", out="out.gif"):
     imgs = []
     for i in range(n_img):
         fname = dir + "/" + str(i).rjust(3, "0") + ".png"
         im = Image.open(fname)
         imgs.append(im)
 
-    imgs[0].save('out.gif', save_all=True, append_images=imgs[1:], loop=1, duration=100)
+    imgs[0].save(out, save_all=True, append_images=imgs[1:], loop=1, duration=100)
 
 
 def main():

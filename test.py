@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import matplotlib.collections as mc
+import matplotlib.collections as mc0
 from matplotlib.animation import ArtistAnimation
 import pickle
 from PIL import Image
