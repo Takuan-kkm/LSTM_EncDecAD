@@ -12,12 +12,16 @@ def main():
         net = pickle.load(f)
 
     # 元データをアニメgif化
-    seq_to_png(test[1])
-    make_gifanime(100, out="test[1].gif")
+    seq_to_png(test[20])
+    make_gifanime(100, out="test[4].gif")
 
-    pred = net(test[1])
+    datum = test[20]
+    shape = datum.shape
+    pred = net(datum.reshape([shape[0], 1, shape[1]]))
 
-    seq_to_png(pred)
+    pred_skelton = [pred[i][0].data for i in range(100)]
+
+    seq_to_png(pred_skelton)
     make_gifanime(100, out="pred.gif")
 
 

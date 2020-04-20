@@ -22,7 +22,7 @@ def keypoints_to_img(keypoints, fname):
     lines = []
     colors = []
     for i in range(len(ln)):
-        if not (ln[i][0][0] == 0 or ln[i][1][0] == 0):  # 線分の始点、終点の座標が0だったら(keypointを検出できていなかったら)線分を削除
+        if not (ln[i][0][0] <= 0.1 or ln[i][1][0] <= 0.1):  # 線分の始点、終点の座標が0だったら(keypointを検出できていなかったら)線分を削除
             lines.append(ln[i])
             colors.append(cl[i])
 

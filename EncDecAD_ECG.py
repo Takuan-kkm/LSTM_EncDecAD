@@ -72,7 +72,7 @@ def main():
 
     # train_iter = chainer.iterators.SerialIterator(train, args.batchsize)
     train_iter = SerialIterator(train, args.batchsize)
-    test_iter = SerialIterator(test, args.batchsize, repeat=False)
+    test_iter = SerialIterator(test, test.shape[0], repeat=False)
     print("Iterator initialized.")
 
     # Set up a neural network to train
@@ -90,7 +90,7 @@ def main():
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
     # Evaluate the model with the test dataset for each epoch
-    trainer.extend(extensions.evaluator(test_iter, model, device=device))
+    trainer.extend(extensions.Evaluator(test_iter, model, device=device))
 
     # Take a snapshot for each specified epoch
     frequency = args.epoch if args.frequency == -1 else max(1, args.frequency)
