@@ -85,7 +85,7 @@ def main():
     test_iter = SerialIterator(test, args.batchsize, repeat=False)
     print("Iterator initialized.")
 
-    next = train_iter.__next__()
+    next = test_iter.__next__()
     # 元波形をプロット
     x = [i[0] for i in next[0]]
     plt.xlim([0, 140])
@@ -94,7 +94,7 @@ def main():
     plt.show()
 
     # モデルのロード
-    with open("result/model.pkl", "rb") as f:
+    with open("result_ECG/model.pkl", "rb") as f:
         model = pickle.load(f)
 
     # モデルによる復元

@@ -2,20 +2,23 @@ import pickle
 from pose_animation import make_gifanime
 from pose_animation import seq_to_png
 
+
 def main():
     # Load dataset
     with open("test.sav", "rb") as f:
         test = pickle.load(f)
 
     # Load network
-    with open("result/model.pkl", "rb") as f:
+    with open("result_OpenPose_epoch75_minibatch8/model.pkl", "rb") as f:
         net = pickle.load(f)
 
+    index = 23  # 参照するデータ番号
+
     # 元データをアニメgif化
-    seq_to_png(test[20])
+    seq_to_png(test[index])
     make_gifanime(100, out="test[4].gif")
 
-    datum = test[20]
+    datum = test[index]
     shape = datum.shape
     pred = net(datum.reshape([shape[0], 1, shape[1]]))
 
