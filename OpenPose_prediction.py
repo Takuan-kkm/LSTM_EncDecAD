@@ -9,14 +9,14 @@ def main():
         test = pickle.load(f)
 
     # Load network
-    with open("result_OpenPose_epoch75_minibatch8/model.pkl", "rb") as f:
+    with open("result/model.pkl", "rb") as f:
         net = pickle.load(f)
 
-    index = 23  # 参照するデータ番号
+    index = 28  # 参照するデータ番号
 
     # 元データをアニメgif化
     seq_to_png(test[index])
-    make_gifanime(100, out="test[4].gif")
+    make_gifanime(100, out="test[28].gif")
 
     datum = test[index]
     shape = datum.shape

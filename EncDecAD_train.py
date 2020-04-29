@@ -14,7 +14,7 @@ def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
     parser.add_argument('--batchsize', '-b', type=int, default=8,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=80,
+    parser.add_argument('--epoch', '-e', type=int, default=20,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--frequency', '-f', type=int, default=-1,
                         help='Frequency of taking a snapshot')
@@ -25,8 +25,9 @@ def main():
                              'negative integer, NumPy arrays are used')
     parser.add_argument('--out', '-o', default='result',
                         help='Directory to output the result')
-    parser.add_argument('--resume', '-r', default="result/snapshot_iter_1119", type=str,
+    parser.add_argument('--resume', '-r', type=str,
                         help='Resume the training from snapshot')
+    #  default="result/snapshot_iter_1119"
     parser.add_argument('--autoload', action='store_true',
                         help='Automatically load trainer snapshots in case'
                              ' of preemption or other temporary system failure')
@@ -64,7 +65,7 @@ def main():
     test_iter = SerialIterator(test, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(50, 3500)
+    net = EncDecAD(50, 1500)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()
