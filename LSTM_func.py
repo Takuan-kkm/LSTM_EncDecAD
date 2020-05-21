@@ -9,6 +9,7 @@ import cupy as cp
 import copy
 from chainer import reporter as reporter_module
 import time
+import math
 
 
 # Network definition
@@ -52,6 +53,7 @@ class EncDecAD(chainer.Chain):
         self.encLSTM.reset_state()
         self.decLSTM.reset_state()
 
+
 # Return loss when given minibatch of time-series data
 class LSTM_MSE(L.Classifier):
     def __init__(self, predictor):
@@ -74,6 +76,11 @@ class LSTM_MSE(L.Classifier):
         return self.loss
 
     def mean_squeared_error(self, x1, x2):  # x1 = pred(list of Variable), x2 = x[i](ndarray)
+        #  全フレームの関節点毎の二乗誤差の総和を計算します。
+        #  x1にはモデルを通過した後の動作データ、
+        #  x2には元の動作データが引数として与えられることを想定しています。
+        #  返り値 mse.data: float
+
         mse = 0
         seq_len = x2.shape[0]
         dim = x2.shape[1]
@@ -83,6 +90,24 @@ class LSTM_MSE(L.Classifier):
                 mse += (x1[s][0][d] - x2[s][d]) ** 2
 
         return mse
+
+    def calc_distance(self, x1, x2):  # x1 = pred(list of Variable), x2 = x[i](ndarray)
+        #  各フレームの姿勢をベクトルで表現したときのノルムの総和を計算します。
+        #  x1にはモデルを通過した後の動作データ、
+        #  x2には元の動作データが引数として与えられることを想定しています。
+        #  返り値 distance: float
+
+        distance = 0
+        seq_len = x2.shape[0]
+        dim = x2.shape[1]
+
+        for s in range(seq_len):
+            mse = 0
+            for d in range(dim):
+                mse += (x1[s][0][d] - x2[s][d]) ** 2
+            distance += math.sqrt(mse.data)
+
+        return distance
 
 
 class LSTMUpdater(training.StandardUpdater):

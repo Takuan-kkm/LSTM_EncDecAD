@@ -4,6 +4,7 @@ import glob
 import json
 import argparse
 import pickle
+import math
 
 
 def extraction_serialnum(filename):  # ファイルパスlist.sort()で使う
@@ -21,8 +22,8 @@ parser.add_argument("--train_path", default="train.sav")
 parser.add_argument("--test_path", default="test.sav")
 parser.add_argument("--confuse_path", default="confuse.sav")
 parser.add_argument("--test_train_split", default=True)
-parser.add_argument("--seq_len", default=100)
-parser.add_argument("--step_size", default=25)
+parser.add_argument("--seq_len", default=50)
+parser.add_argument("--step_size", default=5)
 parser.add_argument("-r", default=10, help="Set frame rate used when extracting keypoints with OpenPose")
 
 args = parser.parse_known_args()
@@ -45,7 +46,7 @@ for path in Body_keypoints_path:
             # 腰・腹部・両腕の内、検出されていない部位があった場合には前フレームと同位置とする
             if len(X) == 1:  # 最初のフレームは飛ばす
                 continue
-            for i in range(18):
+            for i in list(range(20))+[24, 25]:
                 if X[-1][i] == 0:
                     X[-1][i] = X[-2][i]
             # X.append(Bk["people"][0]["pose_keypoints_2d"])
@@ -61,12 +62,12 @@ if args[0].test_train_split is True:
     test = [X_test[i:i + args[0].seq_len] for i in range(0, len(X_test), args[0].step_size)]
 
     # 先頭と末尾の要素を除いてndarrayに変換
-    X_train = cp.array(train[1:-4], dtype="float32")
-    X_test = cp.array(test[1:-4], dtype="float32")
+    X_train = cp.array(train[1:-math.floor(args[0].seq_len/args[0].step_size)], dtype="float32")
+    X_test = cp.array(test[1:-math.floor(args[0].seq_len/args[0].step_size)], dtype="float32")
 
     pickle.dump(X_train, open(args[0].train_path, "wb"))
     pickle.dump(X_test, open(args[0].test_path, "wb"))
 else:
     confuse = [X[i:i + args[0].seq_len] for i in range(0, len(X), args[0].step_size)]
-    X_confuse = cp.array(confuse[1:-4], dtype="float32")
+    X_confuse = cp.array(confuse[1:-math.floor(args[0].seq_len/args[0].step_size)], dtype="float32")
     pickle.dump(X_confuse, open(args[0].confuse_path, "wb"))
