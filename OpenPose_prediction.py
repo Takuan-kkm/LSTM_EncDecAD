@@ -28,6 +28,9 @@ def main():
     seq_to_png(pred_skelton)
     make_gifanime(SEQUENCE_LEN, out="test[41]b.gif")
 
+    print(datum)
+    print(pred)
+
 
 if __name__ == "__main__":
     main()
