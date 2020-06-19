@@ -7,15 +7,23 @@ class AnomaryDetector:
     mu = 0
     inv_sigma = 0
 
-    def __init__(self, net, seq_length, m):
+    def __init__(self, net, seq_length, dim, calc_length=None):
         """
         :param net: chainerにて実装+学習済みのEndDec_ADモデル
-        :param l: 入力する時系列データの時系列長
-        :param m: 時系列データの各時刻のデータベクトルの次元
+        :param seq_length: 入力する時系列データの時系列長
+        :param dim: 時系列データの各時刻のデータベクトルの次元
+        :param calc_length: 時系列データの内、異常検知に利用する時刻の範囲 先頭からどの時刻までか指定
         """
         self.net = net
         self.seq_length = seq_length
-        self.vec_dim = m
+        self.vec_dim = dim
+
+        if calc_length == None:
+            self.calc_length = seq_length
+        elif seq_length >= calc_length:
+            self.calc_length = calc_length
+        else:
+            raise ValueError("calc_length must be smaller than seq_length")
 
     def fit(self, normal_seq):
         """
@@ -33,16 +41,16 @@ class AnomaryDetector:
         sigma = np.cov(self.err_for_normal_set, rowvar=False)
         self.inv_sigma = np.linalg.inv(sigma)
 
-    def reconstruct(self, seqence):
+    def reconstruct(self, origin_seq):
         """
-        :param seqence: array-like
+        :param origin_seq: array-like
             時系列データ [[t_0], [t_1], ..., [t_l-1]] = [[array of float], [array of float], ...]
         :return: [variable([[skelton_pos_t0]]), variable([[skelton_pos_t1]]), ...]
         """
 
-        shape = seqence.shape
-        reconst_value = self.net(seqence.reshape([shape[0], 1, shape[1]]))
-        return reconst_value
+        shape = origin_seq.shape
+        reconst_seq = self.net(origin_seq.reshape([shape[0], 1, shape[1]]))
+        return reconst_seq
 
     def calc_anomary_score(self, anomalous_seq):
         """
@@ -52,7 +60,7 @@ class AnomaryDetector:
         anomary_score = []
         err = self.calc_err_vec(anomalous_seq)
 
-        for e in err:
+        for e in err[:self.calc_length]:
             score = np.dot(np.dot(e - self.mu, self.inv_sigma), e - self.mu)
             anomary_score.append(score)
 
@@ -66,7 +74,7 @@ class AnomaryDetector:
         """
         err = []
         reconst_seq = self.reconstruct(raw_seq)
-        for t in range(self.seq_length):
+        for t in range(self.calc_length):
             err.append(np.abs(raw_seq[t] - reconst_seq[t].data[0]).tolist())
 
         return np.array(err)
