@@ -45,6 +45,12 @@ def main():
     score_normal = (score_normal[:-2]+score_normal[1:-1]+score_normal[2:])/3
     score_confuse = (score_confuse[:-2] + score_confuse[1:-1] + score_confuse[2:])/3
 
+    # save result
+    with open("ascore_normal", "wb") as f:
+        pickle.dump(score_normal, f)
+    with open("ascore_confuse.pkl", "wb") as f:
+        pickle.dump(score_confuse, f)
+
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(score_normal, label="normal behavior/anomary score")
