@@ -60,12 +60,19 @@ for path in Body_keypoints_path:
 
             # 関節角を計算
             for angle in [[0, 1, 5], [1, 2, 3], [2, 3, 4], [1, 5, 6], [5, 6, 7], [1, 8, 10]]:
-                ax = temp[2 * angle[0]], ay = temp[2 * angle[0] + 1]
-                bx = temp[2 * angle[1]], by = temp[2 * angle[1] + 1]
-                cx = temp[2 * angle[2]], cy = temp[2 * angle[2] + 1]
-                cos = ((ax - bx) * (cx - bx) + (ay - by) * (cy - by)) / (
+                ax = temp[2 * angle[0]]
+                ay = temp[2 * angle[0] + 1]
+                bx = temp[2 * angle[1]]
+                by = temp[2 * angle[1] + 1]
+                cx = temp[2 * angle[2]]
+                cy = temp[2 * angle[2] + 1]
+
+                if [(ax - bx), (ay - by)] == [0, 0] or [(cx - bx), (cy - by)] == [0, 0]:  # 内積が0になるときには角度は0とする
+                    temp.append(0)
+                else:
+                    cos = ((ax - bx) * (cx - bx) + (ay - by) * (cy - by)) / (
                             math.sqrt((ax - bx) ** 2 + (ay - by) ** 2) * math.sqrt((cx - bx) ** 2 + (cy - by) ** 2))
-                temp.append(math.acos(cos))
+                    temp.append(math.acos(cos))
 
             X.append(temp)
             print(X_temp[-1])
