@@ -47,22 +47,29 @@ for path in Body_keypoints_path:
             X_temp.append([Bk["people"][0]["pose_keypoints_2d"][i] for i in range(75) if i % 3 != 2])
 
             # 腰・腹部・両腕の内、検出されていない部位があった場合には前フレームと同位置とする
-            if len(X_temp) == 1:  # 最初のフレームは飛ばす
-                continue
-            for i in list(range(20)) + [24, 25]:
-                if X_temp[-1][i] == 0:
-                    X_temp[-1][i] = X[-2][i]
+            if len(X_temp) > 1:  # 最初のフレームは飛ばす
+                for i in list(range(20)) + [24, 25]:
+                    if X_temp[-1][i] == 0:
+                        X_temp[-1][i] = X_temp[-2][i]
 
             # 各部位の座標を腰(x_temp[16], x_temp[17])からの相対位置とする, y座標は正負反転
             temp = []
             for i in list(range(10)) + [12] + list(range(15, 19)):
-                temp.append(X_temp[i * 2] - X_temp[8 * 2])  # i番目の関節のx座標
-                temp.append(X_temp[8 * 2 + 1] - X_temp[i * 2 + 1]) # i番目の関節のy座標
+                temp.append(X_temp[-1][i * 2] - X_temp[-1][8 * 2])  # i番目の関節のx座標
+                temp.append(X_temp[-1][8 * 2 + 1] - X_temp[-1][i * 2 + 1])  # i番目の関節のy座標
+
+            # 関節角を計算
+            for angle in [[0, 1, 5], [1, 2, 3], [2, 3, 4], [1, 5, 6], [5, 6, 7], [1, 8, 10]]:
+                ax = temp[2 * angle[0]], ay = temp[2 * angle[0] + 1]
+                bx = temp[2 * angle[1]], by = temp[2 * angle[1] + 1]
+                cx = temp[2 * angle[2]], cy = temp[2 * angle[2] + 1]
+                cos = ((ax - bx) * (cx - bx) + (ay - by) * (cy - by)) / (
+                            math.sqrt((ax - bx) ** 2 + (ay - by) ** 2) * math.sqrt((cx - bx) ** 2 + (cy - by) ** 2))
+                temp.append(math.acos(cos))
 
             X.append(temp)
-            print(X_temp[0])
+            print(X_temp[-1])
             print(temp)
-            exit()
 
         except Exception as e:
             X.append(X[-1])
