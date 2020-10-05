@@ -9,19 +9,25 @@ pd.set_option('display.max_columns', 150)
 # OptiTrackからの出力CSVを読み込み、EncDecADに入力できる形(Cupy Seqences)に変換するスクリプト   #
 #######################################################################################
 
-DATA_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/Take 2020-09-29 07.18.47 PM.csv"
-OUT_PATH = ""
+DATA_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/Take 2020-09-29 07.18.47 PM.csv"  # Temporary
+OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/Take 2020-09-29 07.18.47 PM.pkl"  # Temporary
+
+SUBJECT_ID = "00"
+SKELETON_NAME = "Skeleton 002:"
+DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/"
+OUT_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/"
+
 SEQ_LEN = 50
 STEP_SIZE = 10
-SKELTON_NAME = "Skeleton 002:"
-Markers = ["Hip", "WaistLFront", "WaistRFront", "WaistLBack", "WaistRBack", "Chest",
-           "BackTop", "BackLeft", "BackRight", "HeadTop", "HeadFront", "HeadSide",
-           "LShoulderBack", "LShoulderTop", "LElbowOut", "LUArmHigh", "LHandOut", "LWristOut", "LWristIn",
-           "RShoulderBack", "RShoulderTop", "RElbowOut", "RUArmHigh", "RHandOut", "RWristOut", "RWristIn"]
+
+Markers_to_use = ["Hip", "WaistLFront", "WaistRFront", "WaistLBack", "WaistRBack", "Chest",
+                  "BackTop", "BackLeft", "BackRight", "HeadTop", "HeadFront", "HeadSide",
+                  "LShoulderBack", "LShoulderTop", "LElbowOut", "LUArmHigh", "LHandOut", "LWristOut", "LWristIn",
+                  "RShoulderBack", "RShoulderTop", "RElbowOut", "RUArmHigh", "RHandOut", "RWristOut", "RWristIn"]
 Markers_to_drop = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
                    "RFArm", "RHand", "LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
-Markers = [SKELTON_NAME + name for name in Markers]
-Markers_to_drop = [SKELTON_NAME + name for name in Markers_to_drop]
+Markers_to_use = [SKELETON_NAME + name for name in Markers_to_use]
+Markers_to_drop = [SKELETON_NAME + name for name in Markers_to_drop]
 
 # CSVファイル読み込み
 df = pd.read_csv(DATA_PATH, skiprows=3, header=[0, 2, 3], index_col=0)
@@ -33,5 +39,5 @@ for m in Markers_to_drop:
 
 ndarr = df.to_numpy()
 ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
-out = cp.array(ndarr[1:-math.floor(SEQ_LEN/STEP_SIZE)], dtype="float32")
+out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
 pickle.dump(out, open(OUT_PATH, "wb"))
