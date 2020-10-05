@@ -16,14 +16,14 @@ parser = argparse.ArgumentParser()
 
 # OpenPoseで抽出したBodykeypoints.jsonファイル群のディレクトリ
 # Body_keypoints_dirのpathはバックスラッシュ+エスケープ使用必須 (globの仕様上)
-parser.add_argument("--Body_keypoints_dir", default="output_json\\",
+parser.add_argument("--Body_keypoints_dir", default="output_json_confuse\\",
                     help="Process a directory of Body keypoints files(.json).")
 parser.add_argument("--Body_keypoints_dir_confuse", default="output_json_confuse\\",
                     help="Process a directory of Body keypoints files(.json).")
 parser.add_argument("--train_path", default="train.sav")
 parser.add_argument("--test_path", default="test.sav")
 parser.add_argument("--confuse_path", default="confuse.sav")
-parser.add_argument("--test_train_split", default=True)
+parser.add_argument("--test_train_split", default=False)
 parser.add_argument("--seq_len", default=50)
 parser.add_argument("--step_size", default=5)
 parser.add_argument("-r", default=10, help="Set frame rate used when extracting keypoints with OpenPose")
@@ -54,12 +54,14 @@ for path in Body_keypoints_path:
 
             # 各部位の座標を腰(x_temp[16], x_temp[17])からの相対位置とする, y座標は正負反転
             temp = []
+            temp_angle = []
             for i in list(range(10)) + [12] + list(range(15, 19)):
                 temp.append(X_temp[-1][i * 2] - X_temp[-1][8 * 2])  # i番目の関節のx座標
                 temp.append(X_temp[-1][8 * 2 + 1] - X_temp[-1][i * 2 + 1])  # i番目の関節のy座標
 
             # 関節角を計算
-            for angle in [[0, 1, 5], [1, 2, 3], [2, 3, 4], [1, 5, 6], [5, 6, 7], [1, 8, 10]]:
+            for angle in [[0, 1, 5], [0, 1, 2], [1, 2, 3], [2, 3, 4], [1, 5, 6],
+                          [5, 6, 7], [1, 8, 10], [1, 0, 11], [0, 11, 13]]:
                 ax = temp[2 * angle[0]]
                 ay = temp[2 * angle[0] + 1]
                 bx = temp[2 * angle[1]]
@@ -68,15 +70,15 @@ for path in Body_keypoints_path:
                 cy = temp[2 * angle[2] + 1]
 
                 if [(ax - bx), (ay - by)] == [0, 0] or [(cx - bx), (cy - by)] == [0, 0]:  # 内積が0になるときには角度は0とする
-                    temp.append(0)
+                    temp_angle.append(0)
                 else:
                     cos = ((ax - bx) * (cx - bx) + (ay - by) * (cy - by)) / (
                             math.sqrt((ax - bx) ** 2 + (ay - by) ** 2) * math.sqrt((cx - bx) ** 2 + (cy - by) ** 2))
-                    temp.append(math.acos(cos))
+                    temp_angle.append(math.acos(cos))
 
             X.append(temp)
-            print(X_temp[-1])
-            print(temp)
+            # print(X_temp[-1][15:19])
+            # print(temp[15:19])
 
         except Exception as e:
             X.append(X[-1])

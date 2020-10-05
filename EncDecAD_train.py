@@ -25,13 +25,13 @@ def main():
                              'negative integer, NumPy arrays are used')
     parser.add_argument('--out', '-o', default='result',
                         help='Directory to output the result')
-    parser.add_argument('--resume', '-r', type=str,
+    parser.add_argument('--resume', '-r', type=str, default="result/snapshot_iter_736",
                         help='Resume the training from snapshot')
     #  default="result/snapshot_iter_1119"
     parser.add_argument('--autoload', action='store_true',
                         help='Automatically load trainer snapshots in case'
                              ' of preemption or other temporary system failure')
-    parser.add_argument('--unit', '-u', type=int, default=20,
+    parser.add_argument('--unit', '-u', type=int, default=15,
                         help='Number of units')
     # parser.add_argument('--noplot', dest='plot', action='store_false', help='Disable PlotReport extension')
     parser.add_argument('--plot', type=bool, default=True, help='Disable PlotReport extension')
@@ -65,7 +65,7 @@ def main():
     test_iter = SerialIterator(test, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(50, 1000)
+    net = EncDecAD(9, 500)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()

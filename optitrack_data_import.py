@@ -1,8 +1,9 @@
 import pandas as pd
-import numpy as cp
+import cupy as cp
 import pickle
 import math
 import os
+import glob
 
 pd.set_option('display.max_columns', 150)
 #######################################################################################
@@ -29,15 +30,38 @@ Markers_to_drop = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "
 Markers_to_use = [SKELETON_NAME + name for name in Markers_to_use]
 Markers_to_drop = [SKELETON_NAME + name for name in Markers_to_drop]
 
-# CSVファイル読み込み
-df = pd.read_csv(DATA_PATH, skiprows=3, header=[0, 2, 3], index_col=0)
 
-# 使わない列は削除
-df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
-for m in Markers_to_drop:
-    df = df.drop((m, "Rotation"), axis=1)
+def df_to_cp(df):
+    # 使わない列は削除
+    df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
+    for m in Markers_to_drop:
+        df = df.drop((m, "Rotation"), axis=1)
 
-ndarr = df.to_numpy()
-ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
-out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
-pickle.dump(out, open(OUT_PATH, "wb"))
+    # ndarrayに変換
+    ndarr = df.to_numpy()
+    ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
+    out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
+
+    return out
+
+
+def main():
+    # CSVファイル読み込み
+    if DATA_DIR == "":
+        df = pd.read_csv(DATA_PATH, skiprows=3, header=[0, 2, 3], index_col=0)
+        out = df_to_cp(df)
+    else:
+        path = glob.glob(DATA_DIR + "*.csv")
+
+        for index, csv in enumerate(path):
+            df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
+            if index == 0:
+                out = df_to_cp(df)
+            else:
+                out = cp.concatenate([out, df_to_cp(df)])
+
+    pickle.dump(out, open(OUT_PATH, "wb"))
+
+
+if __name__ == "__main__":
+    main()

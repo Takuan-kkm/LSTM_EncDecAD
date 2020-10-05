@@ -28,11 +28,11 @@ while True:
     i += 1
     if i < 5:
         continue
-
-
+    if i > 2097:
+        break
 
     if ret:
-        if score[i - 5] > 150:
+        if score[i - 6] > 150:
             color = (30, 30, 255)
         else:
             color = (0, 255, 0)
