@@ -1,21 +1,12 @@
 import pickle
 import os
-import matplotlib.pyplot as plt
-from adfunc import AnomaryDetector
 
-STEP_SIZE = 5
-SEQ_LEN = 50
+SUBJECT_ID = "TEST_NOAKI_1008"
+path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"
 
+with open(path, "rb") as f:
+    arr = pickle.load(f)
 
-def main():
-    OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/Take 2020-09-29 07.18.47 PM.pkl"
-    # Load dataset
-    with open(OUT_PATH, "rb") as f:
-        test = pickle.load(f)
-
-    print(test.shape)
-    print(test[0])
-
-
-if __name__ == "__main__":
-    main()
+print(arr.shape)
+print(arr[0])
+print(arr[1])
