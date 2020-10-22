@@ -9,12 +9,18 @@ from LSTM_func import LSTM_MSE
 from LSTM_func import LSTM_Iterator
 from LSTM_func import LSTMUpdater
 from LSTM_func import MyEvaluator
+import os
+
 
 def main():
+    SUBJECT_ID = "TEST_NOAKI_1008"
+    TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TEST.pkl"
+    TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"
+
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
     parser.add_argument('--batchsize', '-b', type=int, default=8,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=20,
+    parser.add_argument('--epoch', '-e', type=int, default=35,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--frequency', '-f', type=int, default=-1,
                         help='Frequency of taking a snapshot')
@@ -25,7 +31,7 @@ def main():
                              'negative integer, NumPy arrays are used')
     parser.add_argument('--out', '-o', default='result',
                         help='Directory to output the result')
-    parser.add_argument('--resume', '-r', type=str, default="result/snapshot_iter_736",
+    parser.add_argument('--resume', '-r', type=str, default="result/snapshot_iter_1268",
                         help='Resume the training from snapshot')
     #  default="result/snapshot_iter_1119"
     parser.add_argument('--autoload', action='store_true',
@@ -35,8 +41,8 @@ def main():
                         help='Number of units')
     # parser.add_argument('--noplot', dest='plot', action='store_false', help='Disable PlotReport extension')
     parser.add_argument('--plot', type=bool, default=True, help='Disable PlotReport extension')
-    parser.add_argument("--train_path", type=str, default="train.sav")
-    parser.add_argument("--test_path", type=str, default="test.sav")
+    parser.add_argument("--train_path", type=str, default=TRAIN_PATH)
+    parser.add_argument("--test_path", type=str, default=TEST_PATH)
     group = parser.add_argument_group('deprecated arguments')
     group.add_argument('--gpu', '-g', dest='device',
                        type=int, nargs='?', const=0,
@@ -65,7 +71,7 @@ def main():
     test_iter = SerialIterator(test, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(9, 500)
+    net = EncDecAD(78, 1500)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()
