@@ -1,8 +1,6 @@
-import os
-import glob
-SUBJECT_ID = "00"
-DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/"
+import numpy as np
 
-path = glob.glob(DATA_DIR+"*.csv")
-print(DATA_DIR+"*.csv")
-print(path)
+ls = []
+d = np.array([1, 2, 3])
+print(np.append(d, np.empty(1)))
+print(np.append(d, np.empty(1)).shape)

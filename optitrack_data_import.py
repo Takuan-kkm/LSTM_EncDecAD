@@ -1,16 +1,18 @@
 import pandas as pd
 import cupy as cp
+import numpy as np
 import pickle
 import math
 import os
 import glob
+from scipy import signal
 
 pd.set_option('display.max_columns', 150)
 #######################################################################################
 # OptiTrackからの出力CSVを読み込み、EncDecADに入力できる形(Cupy Seqences)に変換するスクリプト   #
 #######################################################################################
 
-TRAIN = False  # TRAIN == Falseの場合、csvファイル毎にpklファイルを作る。Trueのときは、ディレクトリ内のcsvをまとめてpkl化する。
+TRAIN = True  # TRAIN == Falseの場合、csvファイル毎にpklファイルを作る。Trueのときは、ディレクトリ内のcsvをまとめてpkl化する。
 DATA_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/Take 2020-09-29 07.18.47 PM.csv"  # Temporary
 
 SUBJECT_ID = "TEST_NOAKI_1008"
@@ -47,6 +49,18 @@ def df_to_cp(df):
 
     # ndarrayに変換
     ndarr = df.to_numpy()
+
+    # 速度を計算
+    pos = ndarr
+    sos = signal.butter(3, 2.5, btype="lowpass", output="sos", fs=125)
+    pos = pos.T
+    vel = np.empty_like(pos)
+    for index, p in enumerate(pos):
+        v = p[1:] - p[:-1]
+        v_smoothed = signal.sosfilt(sos, v)
+        vel[index] = np.append(v_smoothed, np.empty(1))
+    ndarr = np.concatenate([pos, vel]).T[:-1]
+
     if SKIP == 0:
         ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
         out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")

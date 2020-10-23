@@ -20,20 +20,20 @@ def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
     parser.add_argument('--batchsize', '-b', type=int, default=8,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=35,
+    parser.add_argument('--epoch', '-e', type=int, default=20,
                         help='Number of sweeps over the dataset to train')
-    parser.add_argument('--frequency', '-f', type=int, default=-1,
+    parser.add_argument('--frequency', '-f', type=int, default=100,
                         help='Frequency of taking a snapshot')
-    parser.add_argument('--device', '-d', type=str, default='0',
+    parser.add_argument('--device', '-d', type=int, default=0,
                         help='Device specifier. Either ChainerX device '
                              'specifier or an integer. If non-negative integer, '
                              'CuPy arrays with specified device id are used. If '
                              'negative integer, NumPy arrays are used')
     parser.add_argument('--out', '-o', default='result',
                         help='Directory to output the result')
-    parser.add_argument('--resume', '-r', type=str, default="result/snapshot_iter_1268",
+    parser.add_argument('--resume', '-r', type=str, default=None,
                         help='Resume the training from snapshot')
-    #  default="result/snapshot_iter_1119"
+    #  default="result/snapshot_iter_1268"
     parser.add_argument('--autoload', action='store_true',
                         help='Automatically load trainer snapshots in case'
                              ' of preemption or other temporary system failure')
@@ -50,6 +50,7 @@ def main():
     args = parser.parse_args()
 
     device = chainer.get_device(args.device)
+    print(device)
 
     print('Device: {}'.format(device))
     print('# unit: {}'.format(args.unit))
@@ -71,7 +72,7 @@ def main():
     test_iter = SerialIterator(test, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(78, 1500)
+    net = EncDecAD(156, 2000)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()
