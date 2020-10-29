@@ -71,13 +71,6 @@ class LSTM_MSE(L.Classifier):
                 self.loss += F.mean_squared_error(xii, predi)
             break
 
-        # for i in range(batch_size):
-        #     shape = x[i].shape
-        #     pred = self.predictor(x[i].reshape([shape[0], 1, shape[1]]))
-        #     self.loss += self.mean_squeared_error(pred, x[i])
-        #     print(self.loss)
-        #     exit()
-
         # 各lossの平均を取る
         self.loss /= batch_size
         # reporter に loss の値を渡す
@@ -129,19 +122,13 @@ class LSTMUpdater(training.StandardUpdater):
         data_iter = self.get_iterator('main')
         optimizer = self.get_optimizer('main')
 
-        start = time.time()
         x_batch = data_iter.__next__()
-        #print("Iteration:", data_iter.current_position, data_iter.epoch, data_iter.epoch_detail)
 
         optimizer.target.cleargrads()
-        loss = optimizer.target(x_batch)  # cp:18sec np:13secw
-        #print("Calc loss:", time.time() - start)
-        loss.backward()  # cp:25sec np:86sec
-        #print("backward", time.time() - start)
+        loss = optimizer.target(x_batch)
+        loss.backward()
         loss.unchain_backward()
-        #print("unchain_backward", time.time() - start)
         optimizer.update()
-        #print("Update", time.time() - start)
 
 
 class LSTM_Iterator(chainer.dataset.Iterator):

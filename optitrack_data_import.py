@@ -81,15 +81,11 @@ def df_to_cp(df, scaler=None):
 
 def calc_vel(pos_t):
     sos = signal.butter(3, 2.5, btype="lowpass", output="sos", fs=125)
-    # pos = pos.T
     vel = np.empty_like(pos_t)
     for index, p in enumerate(pos_t):
         v = p[1:] - p[:-1]
         v_smoothed = signal.sosfilt(sos, v)
         vel[index] = np.append(v_smoothed, np.empty(1))
-
-    # # 速度200倍:速度のピークが0.006程度→1に近づける
-    # vel = np.multiply(vel, 200)
 
     return vel
 
