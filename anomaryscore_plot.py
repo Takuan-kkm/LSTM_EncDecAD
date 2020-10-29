@@ -20,8 +20,8 @@ def score_plot(score, label="score"):
     score = np.array(score)
 
     window = 10
-    samplerate = 250
-    skiprate = 15
+    samplerate = 125
+    skiprate = 5
 
     w = np.ones(window) / window
     score = np.convolve(score, w, mode="same")
@@ -30,8 +30,8 @@ def score_plot(score, label="score"):
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(xl, score, label=label)
-    ax.set_ylim([0, 1600])
-    ax.set_xlim([0, 2 * len(score) * skiprate / samplerate])
+    ax.set_ylim([0, 1200])
+    ax.set_xlim([0, len(score) * skiprate / samplerate])
     ax.set_xlabel("time[sec]")
     ax.set_ylabel("anomary score")
     ax.legend()
@@ -62,10 +62,11 @@ def main():
         task1_1 = pickle.load(f)
 
     # Load network
-    with open("result/model_epoch25.pkl", "rb") as f:
+    with open("result/model.pkl", "rb") as f:
         net = pickle.load(f)
 
-    detector = AnomaryDetector(net, seq_length=50, dim=78, calc_length=25)
+    net.train = False
+    detector = AnomaryDetector(net, seq_length=125, dim=156, calc_length=63)
     print("Fitting...")
     index = 0
     for seq in test:

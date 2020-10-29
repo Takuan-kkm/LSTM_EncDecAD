@@ -11,18 +11,19 @@ from LSTM_func import LSTMUpdater
 from LSTM_func import MyEvaluator
 import os
 
+chainer.config.autotune = True
 
 def main():
     SUBJECT_ID = "TEST_NOAKI_1008"
-    TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TEST.pkl"
+    TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"
     TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"
 
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
-    parser.add_argument('--batchsize', '-b', type=int, default=8,
+    parser.add_argument('--batchsize', '-b', type=int, default=32,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=20,
+    parser.add_argument('--epoch', '-e', type=int, default=300,
                         help='Number of sweeps over the dataset to train')
-    parser.add_argument('--frequency', '-f', type=int, default=100,
+    parser.add_argument('--frequency', '-f', type=int, default=50,
                         help='Frequency of taking a snapshot')
     parser.add_argument('--device', '-d', type=int, default=0,
                         help='Device specifier. Either ChainerX device '

@@ -2,6 +2,7 @@ import warnings
 import chainer
 from chainer import function
 import chainer.links as L
+import chainer.functions as F
 from chainer import training
 from chainer import reporter
 from chainer.training import extensions
@@ -63,10 +64,19 @@ class LSTM_MSE(L.Classifier):
         batch_size = len(x)
         self.loss = 0
 
-        for i in range(batch_size):
-            shape = x[i].shape
-            pred = self.predictor(x[i].reshape([shape[0], 1, shape[1]]))
-            self.loss += self.mean_squeared_error(pred, x[i])
+        for xi in x:
+            xi = xi.reshape([xi.shape[0], 1, xi.shape[1]])
+            pred = self.predictor(xi)
+            for xii, predi in zip(xi, pred):
+                self.loss += F.mean_squared_error(xii, predi)
+            break
+
+        # for i in range(batch_size):
+        #     shape = x[i].shape
+        #     pred = self.predictor(x[i].reshape([shape[0], 1, shape[1]]))
+        #     self.loss += self.mean_squeared_error(pred, x[i])
+        #     print(self.loss)
+        #     exit()
 
         # 各lossの平均を取る
         self.loss /= batch_size
@@ -85,7 +95,7 @@ class LSTM_MSE(L.Classifier):
         seq_len = x2.shape[0]
         dim = x2.shape[1]
 
-        for s in range(seq_len):
+        for s in range(int(seq_len)):
             for d in range(dim):
                 mse += (x1[s][0][d] - x2[s][d]) ** 2
 
@@ -119,13 +129,19 @@ class LSTMUpdater(training.StandardUpdater):
         data_iter = self.get_iterator('main')
         optimizer = self.get_optimizer('main')
 
+        start = time.time()
         x_batch = data_iter.__next__()
+        #print("Iteration:", data_iter.current_position, data_iter.epoch, data_iter.epoch_detail)
 
         optimizer.target.cleargrads()
-        loss = optimizer.target(x_batch)  # cp:18sec np:13sec
+        loss = optimizer.target(x_batch)  # cp:18sec np:13secw
+        #print("Calc loss:", time.time() - start)
         loss.backward()  # cp:25sec np:86sec
+        #print("backward", time.time() - start)
         loss.unchain_backward()
+        #print("unchain_backward", time.time() - start)
         optimizer.update()
+        #print("Update", time.time() - start)
 
 
 class LSTM_Iterator(chainer.dataset.Iterator):
