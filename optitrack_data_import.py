@@ -61,6 +61,32 @@ def df_to_cp(df, scaler=None):
     for m in Markers_to_drop:
         df = df.drop((m, "Rotation"), axis=1)
 
+    # 座標系の変換
+    df = world_to_local(df)
+
+    # ndarrayに変換
+    ndarr = df.to_numpy()
+
+    # 速度を計算
+    pos_t = ndarr.T
+    vel_t = calc_vel(pos_t)
+    ndarr = np.concatenate([pos_t, vel_t]).T[:-1]
+
+    # 標準化
+    if scaler is not None:
+        ndarr = scaler.transform(ndarr)
+
+    if SKIP == 0:
+        ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
+        out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
+    else:
+        ndarr = [ndarr[i:i + SEQ_LEN * SKIP:SKIP] for i in range(0, ndarr.shape[0] - SKIP * (SEQ_LEN - 1), STEP_SIZE)]
+        out = cp.array(ndarr, dtype="float32")
+
+    return out
+
+
+def world_to_local(df):
     # Convert Global Coordinate to Local Coordinate
     # Rotation
     for m in Markers_to_use:
@@ -94,26 +120,7 @@ def df_to_cp(df, scaler=None):
             df.at[idx, (m, "Position", "Z")] = new_position[2]
     print("  Done!")
 
-    # ndarrayに変換
-    ndarr = df.to_numpy()
-
-    # 速度を計算
-    pos_t = ndarr.T
-    vel_t = calc_vel(pos_t)
-    ndarr = np.concatenate([pos_t, vel_t]).T[:-1]
-
-    # 標準化
-    if scaler is not None:
-        ndarr = scaler.transform(ndarr)
-
-    if SKIP == 0:
-        ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
-        out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
-    else:
-        ndarr = [ndarr[i:i + SEQ_LEN * SKIP:SKIP] for i in range(0, ndarr.shape[0] - SKIP * (SEQ_LEN - 1), STEP_SIZE)]
-        out = cp.array(ndarr, dtype="float32")
-
-    return out
+    return df
 
 
 def calc_vel(pos_t):
@@ -133,6 +140,9 @@ def create_scaler(path):
         df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
         for m in Markers_to_drop:
             df = df.drop((m, "Rotation"), axis=1)
+
+        # 座標系の変換
+        df = world_to_local(df)
 
         # ndarrayに変換
         ndarr = df.to_numpy()
