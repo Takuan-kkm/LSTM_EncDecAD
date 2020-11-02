@@ -1,5 +1,6 @@
 import pandas as pd
 import cupy as cp
+from scipy.spatial.transform import Rotation
 import numpy as np
 import pickle
 import math
@@ -41,12 +42,15 @@ else:
     print("DATASETの値を確認してください")
     exit(-1)
 
-Markers_to_use = ["Hip", "WaistLFront", "WaistRFront", "WaistLBack", "WaistRBack", "Chest",
-                  "BackTop", "BackLeft", "BackRight", "HeadTop", "HeadFront", "HeadSide",
-                  "LShoulderBack", "LShoulderTop", "LElbowOut", "LUArmHigh", "LHandOut", "LWristOut", "LWristIn",
-                  "RShoulderBack", "RShoulderTop", "RElbowOut", "RUArmHigh", "RHandOut", "RWristOut", "RWristIn"]
-Markers_to_drop = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
-                   "RFArm", "RHand", "LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
+# Markers_to_use = ["Hip", "WaistLFront", "WaistRFront", "WaistLBack", "WaistRBack", "Chest",
+#                   "BackTop", "BackLeft", "BackRight", "HeadTop", "HeadFront", "HeadSide",
+#                   "LShoulderBack", "LShoulderTop", "LElbowOut", "LUArmHigh", "LHandOut", "LWristOut", "LWristIn",
+#                   "RShoulderBack", "RShoulderTop", "RElbowOut", "RUArmHigh", "RHandOut", "RWristOut", "RWristIn"]
+# Markers_to_drop = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
+#                    "RFArm", "RHand", "LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
+Markers_to_use = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
+                  "RFArm", "RHand"]
+Markers_to_drop = ["LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
 Markers_to_use = [SKELETON_NAME + name for name in Markers_to_use]
 Markers_to_drop = [SKELETON_NAME + name for name in Markers_to_drop]
 
@@ -56,6 +60,39 @@ def df_to_cp(df, scaler=None):
     df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
     for m in Markers_to_drop:
         df = df.drop((m, "Rotation"), axis=1)
+
+    # Convert Global Coordinate to Local Coordinate
+    # Rotation
+    for m in Markers_to_use:
+        if m == "Skeleton 002:Hip":
+            continue
+        df[(m, "Rotation")] = df[(m, "Rotation")] - df[("Skeleton 002:Hip", "Rotation")]
+    print("Rotation Coordinates Convert: Done!")
+
+    # Position
+    len_df = df.shape[0]
+    percent = 0
+    print("  Position Coordinates Convert")
+    print("         0%|         |         |         |          |100%")
+    print("  Progress: ", end="")
+    for idx, d in df.iterrows():
+        if idx / len_df > percent:
+            print("#", end="")
+            percent += 0.025
+
+        for m in Markers_to_use:
+            if m == "Skeleton 002:Hip":
+                rotate_array = d[m, "Rotation"].values
+                hip_origin = d[m, "Position"].values
+                r = Rotation.from_euler('XYZ', [rotate_array[0], rotate_array[1], rotate_array[2]], degrees=True)
+                continue
+
+            body_part_origin = d[(m, "Position")].values
+            new_position = r.inv().as_matrix() @ (body_part_origin - hip_origin)
+            df.at[idx, (m, "Position", "X")] = new_position[0]
+            df.at[idx, (m, "Position", "Y")] = new_position[1]
+            df.at[idx, (m, "Position", "Z")] = new_position[2]
+    print("  Done!")
 
     # ndarrayに変換
     ndarr = df.to_numpy()
@@ -114,7 +151,6 @@ def create_scaler(path):
     scaler.fit(tofit)
 
     return scaler
-
 
 
 def load_scaler():
