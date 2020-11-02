@@ -87,7 +87,7 @@ def df_to_cp(df, scaler=None):
 
 
 def world_to_local(df):
-    # Convert Global Coordinate to Local Coordinate
+    # Convert Global Coordinates to Local Coordinate System
     # Rotation
     for m in Markers_to_use:
         if m == "Skeleton 002:Hip":
