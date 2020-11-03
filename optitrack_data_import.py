@@ -38,6 +38,7 @@ if DATASET in ["TRAIN", "TEST", "VALID"]:
     if DATASET == "VALID":
         DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TEST/"
         OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"
+        STEP_SIZE = STEP_SIZE * 15
 else:
     print("DATASETの値を確認してください")
     exit(-1)
@@ -59,7 +60,7 @@ def df_to_cp(df, scaler=None):
     # 使わない列は削除
     df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
     for m in Markers_to_drop:
-        df = df.drop((m, "Rotation"), axis=1)
+        df = df.drop(m, axis=1)
 
     # 座標系の変換
     df = world_to_local(df)
@@ -93,7 +94,7 @@ def world_to_local(df):
         if m == "Skeleton 002:Hip":
             continue
         df[(m, "Rotation")] = df[(m, "Rotation")] - df[("Skeleton 002:Hip", "Rotation")]
-    print("Rotation Coordinates Convert: Done!")
+    print("  Rotation Coordinates Convert: Done!")
 
     # Position
     len_df = df.shape[0]
@@ -118,7 +119,7 @@ def world_to_local(df):
             df.at[idx, (m, "Position", "X")] = new_position[0]
             df.at[idx, (m, "Position", "Y")] = new_position[1]
             df.at[idx, (m, "Position", "Z")] = new_position[2]
-    print("  Done!")
+    print("  Done!\n")
 
     return df
 
@@ -135,11 +136,13 @@ def calc_vel(pos_t):
 
 
 def create_scaler(path):
+    print("###############################  Scaler Creation  ###############################")
     for index, csv in enumerate(path):
+        print(csv)
         df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
         df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
         for m in Markers_to_drop:
-            df = df.drop((m, "Rotation"), axis=1)
+            df = df.drop(m, axis=1)
 
         # 座標系の変換
         df = world_to_local(df)

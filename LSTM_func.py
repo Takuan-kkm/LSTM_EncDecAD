@@ -21,8 +21,12 @@ class EncDecAD(chainer.Chain):
         with self.init_scope():
             self.encLSTM = L.LSTM(in_size=n_in, out_size=n_units, lateral_init=chainer.initializers.Normal(scale=0.01))
             self.decLSTM = L.LSTM(in_size=n_in, out_size=n_units, lateral_init=chainer.initializers.Normal(scale=0.01))
-            self.l1 = L.Linear(in_size=n_units, out_size=n_in, initialW=chainer.initializers.Normal(scale=0.01))
-            self.l2 = L.Swish(beta_shape=n_in)
+            # self.l1 = L.Linear(in_size=n_units, out_size=n_in, initialW=chainer.initializers.Normal(scale=0.01))
+            # self.l2 = L.Swish(beta_shape=n_in)
+
+            self.l1 = L.Linear(in_size=n_units, out_size=int(n_units/2), initialW=chainer.initializers.Normal(scale=0.01))
+            self.l2 = L.Linear(in_size=int(n_units/2), out_size=n_in, initialW=chainer.initializers.Normal(scale=0.01))
+            self.l3 = L.Swish(beta_shape=n_in)
             self.train = train
 
     def __call__(self, X_sequence):
@@ -38,7 +42,12 @@ class EncDecAD(chainer.Chain):
         self.decLSTM.h = self.encLSTM.h
         if self.train is True:
             for i in range(seq_len):
-                y = self.l2(self.l1(self.decLSTM.h))
+                # y = self.l2(self.l1(self.decLSTM.h))
+                # y_sequence.append(y)
+                # self.decLSTM(X_sequence[-i])
+
+                y = F.dropout(F.relu(self.l1(self.decLSTM.h)), ratio=0.5)
+                y = self.l3(self.l2(y))
                 y_sequence.append(y)
                 self.decLSTM(X_sequence[-i])
         else:

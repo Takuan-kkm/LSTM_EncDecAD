@@ -2,6 +2,7 @@ import argparse
 import chainer
 from chainer import training
 from chainer.training import extensions
+from chainer.optimizer_hooks import WeightDecay
 import pickle
 from chainer.iterators import SerialIterator
 from LSTM_func import EncDecAD
@@ -21,7 +22,7 @@ def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
     parser.add_argument('--batchsize', '-b', type=int, default=32,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=300,
+    parser.add_argument('--epoch', '-e', type=int, default=200,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--frequency', '-f', type=int, default=50,
                         help='Frequency of taking a snapshot')
@@ -81,6 +82,11 @@ def main():
     # Setup an optimizer
     optimizer = chainer.optimizers.Adam()
     optimizer.setup(model)
+
+    # 重み減衰
+    for param in net.params():
+        if param.name != 'b':  # バイアス以外だったら
+            param.update_rule.add_hook(WeightDecay(0.0001))  # 重み減衰を適用
 
     # Set up a trainer
     updater = LSTMUpdater(train_iter, optimizer, device=device)
