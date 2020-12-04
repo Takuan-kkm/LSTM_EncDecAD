@@ -6,14 +6,16 @@ import numpy as np
 
 import os
 
-SUBJECT_ID = "TEST_NOAKI_1008"
+SUBJECT_ID = "TEST_SHINCHAN_1112"
 ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task1_1.pkl"
 ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task1_2.pkl"
 ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task2_1.pkl"
 ptask2_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task2_2.pkl"
 ptask3_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task3_1.pkl"
 ptask3_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task3_2.pkl"
-normal_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + "TEST_NOAKI_1008_TRAIN.pkl"
+ptask4_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task4_1.pkl"
+ptask4_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task4_2.pkl"
+normal_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_TRAIN.pkl"
 
 
 def score_plot(score, label="score"):
@@ -25,12 +27,12 @@ def score_plot(score, label="score"):
 
     w = np.ones(window) / window
     score = np.convolve(score, w, mode="same")
-    xl = [2 * i * skiprate / samplerate for i in range(len(score))]
+    xl = [i * skiprate / samplerate for i in range(len(score))]
 
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(xl, score, label=label)
-    ax.set_ylim([0, 1200])
+    ax.set_ylim([0, 10000])
     ax.set_xlim([0, len(score) * skiprate / samplerate])
     ax.set_xlabel("time[sec]")
     ax.set_ylabel("anomary score")
@@ -61,26 +63,30 @@ def main():
     with open(ptask1_1, "rb") as f:
         task1_1 = pickle.load(f)
 
+    with open(ptask4_1, "rb") as f:
+        task4_1 = pickle.load(f)
+
+    with open(ptask4_2, "rb") as f:
+        task4_2 = pickle.load(f)
+
     # Load network
-    with open("result/model.pkl", "rb") as f:
+    with open("result_2048units/model.pkl", "rb") as f:
         net = pickle.load(f)
 
     net.train = False
-    detector = AnomaryDetector(net, seq_length=125, dim=156, calc_length=63)
+    detector = AnomaryDetector(net, seq_length=156, dim=156, calc_length=78)
     print("Fitting...")
     index = 0
     for seq in test:
         print(index, " ", end="")
         index += 1
         detector.fit(seq)
+    detector.fit2()
 
     # save the model
     with open("detector.pkl", "wb") as f:
         pickle.dump(detector, f)
 
-    score_normal = []
-    for i in range(0, len(test), 19):
-        score_normal = score_normal + detector.calc_anomary_score(test[i])
 
     score_task1_1 = []
     for i in task1_1:
@@ -106,16 +112,26 @@ def main():
     for i in task3_2:
         score_task3_2 = score_task3_2 + detector.calc_anomary_score(i)
 
-    print("normal:", len(score_normal))
+    score_task4_1 = []
+    for i in task4_1:
+        score_task4_1 = score_task4_1 + detector.calc_anomary_score(i)
+
+    score_task4_2 = []
+    for i in task4_2:
+        score_task4_2 = score_task4_2 + detector.calc_anomary_score(i)
+
+    # print("normal:", len(score_normal))
     # print("confuse:", len(score_confuse))
 
-    score_plot(score_normal, label="normal")
+    # score_plot(score_normal, label="normal")
     score_plot(score_task1_1, label="task1_1")
     score_plot(score_task1_2, label="task1_2")
     score_plot(score_task2_1, label="task2_1")
     score_plot(score_task2_2, label="task2_2")
     score_plot(score_task3_1, label="task3_1")
     score_plot(score_task3_2, label="task3_2")
+    score_plot(score_task4_1, label="task4_1")
+    score_plot(score_task4_2, label="task4_2")
 
     # save result
     # with open("ascore_normal", "wb") as f:

@@ -46,13 +46,14 @@ class EncDecAD(chainer.Chain):
                 # y_sequence.append(y)
                 # self.decLSTM(X_sequence[-i])
 
-                y = F.dropout(F.relu(self.l1(self.decLSTM.h)), ratio=0.5)
+                y = F.dropout(F.leaky_relu(self.l1(self.decLSTM.h)), ratio=0.3)
                 y = self.l3(self.l2(y))
                 y_sequence.append(y)
                 self.decLSTM(X_sequence[-i])
         else:
             for i in range(seq_len):
-                y = self.l2(self.l1(self.decLSTM.h))
+                y = F.leaky_relu(self.l1(self.decLSTM.h))
+                y = self.l3(self.l2(y))
                 y_sequence.append(y)
                 self.decLSTM(y)
 
@@ -70,18 +71,14 @@ class LSTM_MSE(L.Classifier):
         super(LSTM_MSE, self).__init__(predictor)
 
     def __call__(self, x):
-        batch_size = len(x)
         self.loss = 0
 
         for xi in x:
-            xi = xi.reshape([xi.shape[0], 1, xi.shape[1]])
             pred = self.predictor(xi)
-            for xii, predi in zip(xi, pred):
-                self.loss += F.mean_squared_error(xii, predi)
-            break
+            self.loss += F.mean_squared_error(xi[0], pred[0])
 
         # 各lossの平均を取る
-        self.loss /= batch_size
+        # self.loss /= batch_size
         # reporter に loss の値を渡す
         reporter.report({'loss': self.loss}, self)
 
@@ -136,7 +133,7 @@ class LSTMUpdater(training.StandardUpdater):
         optimizer.target.cleargrads()
         loss = optimizer.target(x_batch)
         loss.backward()
-        loss.unchain_backward()
+        # loss.unchain_backward()
         optimizer.update()
 
 

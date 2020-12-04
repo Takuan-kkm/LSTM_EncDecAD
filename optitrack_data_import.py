@@ -6,10 +6,12 @@ import pickle
 import math
 import os
 import glob
+import warnings
 from scipy import signal
 from sklearn.preprocessing import StandardScaler
 
 pd.set_option('display.max_columns', 150)
+warnings.simplefilter("ignore")
 #######################################################################################
 # OptiTrackからの出力CSVを読み込み、EncDecADに入力できる形(Cupy Seqences)に変換するスクリプト   #
 #######################################################################################
@@ -18,26 +20,26 @@ pd.set_option('display.max_columns', 150)
 # VALID = True  # Trueで学習のvalidationに使うデータセットを作る
 DATASET = "TEST"  # TRAIN,TEST,VALIDのどれか
 
-SUBJECT_ID = "TEST_NOAKI_1008"
-SKELETON_NAME = "Skeleton 002:"
+SUBJECT_ID = "TEST_SHINCHAN_1112"
+SKELETON_NAME = "Skeleton 003:"
 
-SEQ_LEN = 125  # 時系列データの長さ
+SEQ_LEN = 156  # 時系列データの長さ
 STEP_SIZE = 12  # 1時系列データ間の開始フレームの差
 SKIP = 5  # 飛ばすフレーム数 ex)OptiTrackの記録レートが125fps,SKIP=5 → 25fpsにダウンサンプリングしてデータ化される
 
-SCALER_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_scaler.pkl"
+SCALER_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_scaler.pkl"
 
 if DATASET in ["TRAIN", "TEST", "VALID"]:
     if DATASET == "TRAIN":
         DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TRAIN/"
-        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"
+        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_TRAIN.pkl"
     if DATASET == "TEST":
         DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TEST/"
         OUT_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/"
         STEP_SIZE = int(SEQ_LEN * SKIP / 2)
     if DATASET == "VALID":
         DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TEST/"
-        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"
+        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_VALID.pkl"
         STEP_SIZE = STEP_SIZE * 15
 else:
     print("DATASETの値を確認してください")
@@ -78,10 +80,10 @@ def df_to_cp(df, scaler=None):
         ndarr = scaler.transform(ndarr)
 
     if SKIP == 0:
-        ndarr = [ndarr[i:i + SEQ_LEN] for i in range(0, ndarr.shape[0], STEP_SIZE)]
+        ndarr = [[ndarr[i:i + SEQ_LEN]] for i in range(0, ndarr.shape[0], STEP_SIZE)]
         out = cp.array(ndarr[1:-math.floor(SEQ_LEN / STEP_SIZE)], dtype="float32")
     else:
-        ndarr = [ndarr[i:i + SEQ_LEN * SKIP:SKIP] for i in range(0, ndarr.shape[0] - SKIP * (SEQ_LEN - 1), STEP_SIZE)]
+        ndarr = [[ndarr[i:i + SEQ_LEN * SKIP:SKIP]] for i in range(0, ndarr.shape[0] - SKIP * (SEQ_LEN - 1), STEP_SIZE)]
         out = cp.array(ndarr, dtype="float32")
 
     return out
@@ -90,10 +92,11 @@ def df_to_cp(df, scaler=None):
 def world_to_local(df):
     # Convert Global Coordinates to Local Coordinate System
     # Rotation
+    hip_name = SKELETON_NAME + "Hip"
     for m in Markers_to_use:
-        if m == "Skeleton 002:Hip":
+        if m == hip_name:
             continue
-        df[(m, "Rotation")] = df[(m, "Rotation")] - df[("Skeleton 002:Hip", "Rotation")]
+        df[(m, "Rotation")] = df[(m, "Rotation")] - df[(SKELETON_NAME + "Hip", "Rotation")]
     print("  Rotation Coordinates Convert: Done!")
 
     # Position
@@ -108,7 +111,7 @@ def world_to_local(df):
             percent += 0.025
 
         for m in Markers_to_use:
-            if m == "Skeleton 002:Hip":
+            if m == hip_name:
                 rotate_array = d[m, "Rotation"].values
                 hip_origin = d[m, "Position"].values
                 r = Rotation.from_euler('XYZ', [rotate_array[0], rotate_array[1], rotate_array[2]], degrees=True)
@@ -174,6 +177,7 @@ def load_scaler():
 
 
 def main():
+    print("OPTION:", DATASET)
     # CSVファイル読み込み
     path = glob.glob(DATA_DIR + "*.csv")
     # print(path)

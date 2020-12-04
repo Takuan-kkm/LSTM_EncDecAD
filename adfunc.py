@@ -1,8 +1,8 @@
-import numpy as np
+import cupy as np
 
 
 class AnomaryDetector:
-    err_for_normal_set = []
+    err_for_normal_set = None
     vec_dim = 0
     mu = 0
     inv_sigma = 0
@@ -18,7 +18,7 @@ class AnomaryDetector:
         self.seq_length = seq_length
         self.vec_dim = dim
 
-        if calc_length == None:
+        if calc_length is None:
             self.calc_length = seq_length
         elif seq_length >= calc_length:
             self.calc_length = calc_length
@@ -31,11 +31,12 @@ class AnomaryDetector:
         :param normal_seq: 正常時系列データ
         :return: なし
         """
-        if self.err_for_normal_set == []:  # errが空リストだったら新規作成
+        if self.err_for_normal_set is None:  # errが空リストだったら新規作成
             self.err_for_normal_set = self.calc_err_vec(normal_seq)
         else:  # errがndarrayで中身が入っていれば結合
             self.err_for_normal_set = np.concatenate([self.err_for_normal_set, self.calc_err_vec(normal_seq)])
 
+    def fit2(self):
         # 平均,不偏共分散行列の逆行列を計算,更新
         self.mu = np.mean(self.err_for_normal_set, axis=0)
         sigma = np.cov(self.err_for_normal_set, rowvar=False)
@@ -47,10 +48,7 @@ class AnomaryDetector:
             時系列データ [[t_0], [t_1], ..., [t_l-1]] = [[array of float], [array of float], ...]
         :return: [variable([[skelton_pos_t0]]), variable([[skelton_pos_t1]]), ...]
         """
-
-        shape = origin_seq.shape
-        reconst_seq = self.net(origin_seq.reshape([shape[0], 1, shape[1]]))
-        return reconst_seq
+        return self.net(origin_seq)
 
     def calc_anomary_score(self, anomalous_seq):
         """
@@ -73,14 +71,18 @@ class AnomaryDetector:
         :return:
         """
         err = []
-        reconst_seq = self.reconstruct(raw_seq)
+
+        reconst_seq = self.reconstruct(raw_seq)[0].array  # cupy
+        raw_seq = raw_seq[0]  # cupy
+
         for t in range(self.calc_length):
-            err.append(np.abs(raw_seq[t] - reconst_seq[t].data[0]).tolist())
+            err.append(np.abs(raw_seq[t] - reconst_seq[t]))
 
         return np.array(err)
 
+
     def reset(self):
-        self.err_for_normal_set = []
+        self.err_for_normal_set = None
         self.vec_dim = 0
         self.mu = 0
         self.inv_sigma = 0

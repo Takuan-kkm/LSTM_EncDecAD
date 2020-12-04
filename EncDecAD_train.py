@@ -2,8 +2,10 @@ import argparse
 import chainer
 from chainer import training
 from chainer.training import extensions
+from chainer.training import StandardUpdater
 from chainer.optimizer_hooks import WeightDecay
 import pickle
+import cupy as cp
 from chainer.iterators import SerialIterator
 from LSTM_func import EncDecAD
 from LSTM_func import LSTM_MSE
@@ -14,17 +16,40 @@ import os
 
 chainer.config.autotune = True
 
-def main():
-    SUBJECT_ID = "TEST_NOAKI_1008"
-    TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"
-    TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"
+SUBJECT_ID = "TEST_SHUTARO_1109"  # temporary variable
+TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"  # temporary variable
+TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"  # temporary variable
 
+SUBJECTS = ["TEST_NOAKI_1008", "TEST_SHUTARO_1109", "TEST_SHINCHAN_1112"]
+
+
+def pkl_read(subjects, train=True):
+    for index, s in enumerate(subjects):
+        if train is True:
+            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + s + "/" + s + "_TRAIN.pkl"
+        else:
+            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + s + "/" + s + "_VALID.pkl"
+
+        if index == 0:
+            with open(path, "rb") as f:
+                data = pickle.load(f)
+        else:
+            with open(path, "rb") as f:
+                data = cp.concatenate([data, pickle.load(f)])
+
+    print(subjects)
+    print("train:", train, "shape:", data.shape)
+
+    return data
+
+
+def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
-    parser.add_argument('--batchsize', '-b', type=int, default=32,
+    parser.add_argument('--batchsize', '-b', type=int, default=128,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=200,
+    parser.add_argument('--epoch', '-e', type=int, default=100,
                         help='Number of sweeps over the dataset to train')
-    parser.add_argument('--frequency', '-f', type=int, default=50,
+    parser.add_argument('--frequency', '-f', type=int, default=150,
                         help='Frequency of taking a snapshot')
     parser.add_argument('--device', '-d', type=int, default=0,
                         help='Device specifier. Either ChainerX device '
@@ -39,7 +64,7 @@ def main():
     parser.add_argument('--autoload', action='store_true',
                         help='Automatically load trainer snapshots in case'
                              ' of preemption or other temporary system failure')
-    parser.add_argument('--unit', '-u', type=int, default=15,
+    parser.add_argument('--unit', '-u', type=int, default=3000,
                         help='Number of units')
     # parser.add_argument('--noplot', dest='plot', action='store_false', help='Disable PlotReport extension')
     parser.add_argument('--plot', type=bool, default=True, help='Disable PlotReport extension')
@@ -62,19 +87,16 @@ def main():
 
     chainer.backends.cuda.set_max_workspace_size(512 * 1024 * 1024)
     chainer.config.autotune = True
-    # Load dataset
-    with open(args.train_path, "rb") as f:
-        train = pickle.load(f)
-    with open(args.test_path, "rb") as f:
-        test = pickle.load(f)
 
-    print("train:", len(train), "test:", len(test))
+    # Load dataset
+    train = pkl_read(subjects=SUBJECTS, train=True)
+    valid = pkl_read(subjects=SUBJECTS, train=False)
 
     train_iter = SerialIterator(train, args.batchsize)
-    test_iter = SerialIterator(test, args.batchsize, repeat=False)
+    test_iter = SerialIterator(valid, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(156, 2000)
+    net = EncDecAD(156, 2048)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()
@@ -89,7 +111,8 @@ def main():
             param.update_rule.add_hook(WeightDecay(0.0001))  # 重み減衰を適用
 
     # Set up a trainer
-    updater = LSTMUpdater(train_iter, optimizer, device=device)
+    # updater = LSTMUpdater(train_iter, optimizer, device=device)
+    updater = StandardUpdater(train_iter, optimizer, device=device)
     trainer = training.Trainer(updater, (args.epoch, 'epoch'), out=args.out)
 
     # Evaluate the model with the test dataset for each epoch
@@ -118,7 +141,7 @@ def main():
     # Entries other than 'epoch' are reported by the Classifier link, called by
     # either the updater or the evaluator.
     trainer.extend(extensions.PrintReport(
-        ['epoch', 'main/loss', 'validation/main/loss', 'main/accuracy', 'validation/main/accuracy', 'elapsed_time']))
+        ['epoch', 'main/loss', 'validation/main/loss', 'elapsed_time']))
 
     # Print a progress bar to stdout
     trainer.extend(extensions.ProgressBar())
