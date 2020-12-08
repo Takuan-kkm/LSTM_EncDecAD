@@ -20,21 +20,23 @@ SUBJECT_ID = "TEST_SHUTARO_1109"  # temporary variable
 TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"  # temporary variable
 TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"  # temporary variable
 
-SUBJECTS = ["TEST_NOAKI_1008", "TEST_SHUTARO_1109", "TEST_SHINCHAN_1112"]
+SUBJECTS = ["T1_1109", "S1_1112", "H1_1202", "E1_1203", "N1_1008"]
 
 
 def pkl_read(subjects, train=True):
     for index, s in enumerate(subjects):
         if train is True:
-            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + s + "/" + s + "_TRAIN.pkl"
+            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + s + "/" + s + "_TRAIN.pkl"
         else:
-            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + s + "/" + s + "_VALID.pkl"
+            path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + s + "/" + s + "_VALID.pkl"
 
         if index == 0:
             with open(path, "rb") as f:
+                print(path)
                 data = pickle.load(f)
         else:
             with open(path, "rb") as f:
+                print(path)
                 data = cp.concatenate([data, pickle.load(f)])
 
     print(subjects)
@@ -45,7 +47,7 @@ def pkl_read(subjects, train=True):
 
 def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
-    parser.add_argument('--batchsize', '-b', type=int, default=128,
+    parser.add_argument('--batchsize', '-b', type=int, default=256,
                         help='Number of images in each mini-batch')
     parser.add_argument('--epoch', '-e', type=int, default=100,
                         help='Number of sweeps over the dataset to train')

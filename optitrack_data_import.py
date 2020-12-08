@@ -155,7 +155,7 @@ def load_scaler(scaler_path):
     return s
 
 
-def convert_logscaled_polar(data, origin=(0, 0, 0)):
+def convert_logscaled_polar(data, origin=(1.4107, 1.0109, 0.061)):
     # 3次元直交座標系を引数座標originを中心とする極座標系に変換
     # 距離軸rは自然対数でスケールされる
     # 回転はそのまま
@@ -220,7 +220,7 @@ def create_dataset(sub_id, dataset_type, coordinate):
         out_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/" + sub_id + "_VALID.pkl"
 
         global STEP_SIZE
-        STEP_SIZE = STEP_SIZE * 15
+        STEP_SIZE = int(STEP_SIZE * 15)
 
         scaler = load_scaler(scaler_path)
         path = glob.glob(data_dir + "*.csv")
@@ -233,6 +233,7 @@ def create_dataset(sub_id, dataset_type, coordinate):
             else:
                 out = cp.concatenate([out, df_to_cp(df, scaler, coordinate)])
         print(out_path, out.shape)
+        STEP_SIZE = int(STEP_SIZE / 15)
 
         pickle.dump(out, open(out_path, "wb"))
 
