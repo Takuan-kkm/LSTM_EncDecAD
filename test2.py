@@ -7,42 +7,38 @@ import cupy as cp
 import os
 import time
 
-N = 1024 * 1024 * 100
-ls = [i + 1 for i in range(N)]
-x = cp.array(ls)
-ls.reverse()
-y = cp.array(ls)
-z = cp.ones(shape=[N])
+np.set_printoptions(threshold=10000, linewidth=250)
+
+col = 4800
+row = 1000
+ls = [i for i in range(row * col)]
+data = np.array(ls).reshape([row, col])
 
 st = time.time()
-r = cp.sqrt(x ** 2 + y ** 2 + z ** 2)
-theta = cp.arccos(z / r)
-phi = cp.arctan(y / x)
-print("cp:", time.time() - st)
-print(r.shape, theta.shape, phi.shape)
+x = data[:, 3::6] - 1024
+y = data[:, 4::6] - 512
+z = data[:, 5::6] - 256
 
-
-x = np.array(ls)
-ls.reverse()
-y = np.array(ls)
-z = np.ones(shape=[N])
-
-st = time.time()
 r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
 theta = np.arccos(z / r)
 phi = np.arctan(y / x)
-print("np:", time.time() - st)
-print(r.shape, theta.shape, phi.shape)
-exit()
 
-# fig = plt.figure()
-# ax = fig.add_subplot(211, projection="3d")
-# # ax.scatter(cp.asnumpy(x), cp.asnumpy(y), cp.asnumpy(z))
-# # ax.scatter(x, y, z)
-# ax.set_zlim([0, 2])
-#
-# ax2 = fig.add_subplot(212, polar=True)
-# # ax2.scatter(cp.asnumpy(r), cp.asnumpy(theta))
-# # ax2.scatter(theta, r)
-# ax2.grid(True)
-# # plt.show()
+data[:, 3::6] = np.log(r)
+data[:, 4::6] = theta
+data[:, 5::6] = phi
+
+print(r.shape)
+print(data.shape)
+
+print(time.time()-st)
+exit()
+fig = plt.figure()
+ax = fig.add_subplot(211, projection="3d")
+# ax.scatter(cp.asnumpy(x), cp.asnumpy(y), cp.asnumpy(z))
+ax.scatter(x, y, z)
+ax.set_zlim([0, 10000])
+
+ax2 = fig.add_subplot(212, polar=True)
+ax2.scatter(phi, r)
+ax2.grid(True)
+plt.show()

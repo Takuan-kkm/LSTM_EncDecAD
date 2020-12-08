@@ -9,48 +9,17 @@ import glob
 import warnings
 from scipy import signal
 from sklearn.preprocessing import StandardScaler
+import argparse
 
 pd.set_option('display.max_columns', 150)
 warnings.simplefilter("ignore")
-#######################################################################################
-# OptiTrackからの出力CSVを読み込み、EncDecADに入力できる形(Cupy Seqences)に変換するスクリプト   #
-#######################################################################################
 
-# TRAIN = True  # TRAIN == Falseの場合、csvファイル毎にpklファイルを作る。Trueのときは、ディレクトリ内のcsvをまとめてpkl化する。
-# VALID = True  # Trueで学習のvalidationに使うデータセットを作る
-DATASET = "TEST"  # TRAIN,TEST,VALIDのどれか
-
-SUBJECT_ID = "TEST_SHINCHAN_1112"
-SKELETON_NAME = "Skeleton 003:"
+SKELETON_NAME = "Skeleton 002:"
 
 SEQ_LEN = 156  # 時系列データの長さ
 STEP_SIZE = 12  # 1時系列データ間の開始フレームの差
-SKIP = 5  # 飛ばすフレーム数 ex)OptiTrackの記録レートが125fps,SKIP=5 → 25fpsにダウンサンプリングしてデータ化される
+SKIP = 5  # 間引くフレーム数 ex)OptiTrackの記録レートが125fps,SKIP=5 → 25fpsにダウンサンプリングしてデータ化
 
-SCALER_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_scaler.pkl"
-
-if DATASET in ["TRAIN", "TEST", "VALID"]:
-    if DATASET == "TRAIN":
-        DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TRAIN/"
-        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_TRAIN.pkl"
-    if DATASET == "TEST":
-        DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TEST/"
-        OUT_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/"
-        STEP_SIZE = int(SEQ_LEN * SKIP / 2)
-    if DATASET == "VALID":
-        DATA_DIR = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV/" + SUBJECT_ID + "/TEST/"
-        OUT_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_VALID.pkl"
-        STEP_SIZE = STEP_SIZE * 15
-else:
-    print("DATASETの値を確認してください")
-    exit(-1)
-
-# Markers_to_use = ["Hip", "WaistLFront", "WaistRFront", "WaistLBack", "WaistRBack", "Chest",
-#                   "BackTop", "BackLeft", "BackRight", "HeadTop", "HeadFront", "HeadSide",
-#                   "LShoulderBack", "LShoulderTop", "LElbowOut", "LUArmHigh", "LHandOut", "LWristOut", "LWristIn",
-#                   "RShoulderBack", "RShoulderTop", "RElbowOut", "RUArmHigh", "RHandOut", "RWristOut", "RWristIn"]
-# Markers_to_drop = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
-#                    "RFArm", "RHand", "LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
 Markers_to_use = ["Hip", "Ab", "Chest", "Neck", "Head", "LShoulder", "LUArm", "LFArm", "LHand", "RShoulder", "RUArm",
                   "RFArm", "RHand"]
 Markers_to_drop = ["LThigh", "LShin", "LFoot", "RThigh", "RShin", "RFoot", "LToe", "RToe"]
@@ -58,17 +27,22 @@ Markers_to_use = [SKELETON_NAME + name for name in Markers_to_use]
 Markers_to_drop = [SKELETON_NAME + name for name in Markers_to_drop]
 
 
-def df_to_cp(df, scaler=None):
+def df_to_cp(df, scaler=None, coordinate=None):
     # 使わない列は削除
     df = df.drop(("Name", "Unnamed: 1_level_1", "Time (Seconds)"), axis=1)
     for m in Markers_to_drop:
         df = df.drop(m, axis=1)
 
-    # 座標系の変換
-    df = world_to_local(df)
+    # ローカル座標系への変換
+    if coordinate == "LOCAL":
+        df = world_to_local(df)
 
     # ndarrayに変換
     ndarr = df.to_numpy()
+
+    # 極座標への変換
+    if coordinate == "POLAR":
+        ndarr = convert_logscaled_polar(ndarr)
 
     # 速度を計算
     pos_t = ndarr.T
@@ -138,7 +112,7 @@ def calc_vel(pos_t):
     return vel
 
 
-def create_scaler(path):
+def create_scaler(path, coordinate):
     print("###############################  Scaler Creation  ###############################")
     for index, csv in enumerate(path):
         print(csv)
@@ -147,11 +121,16 @@ def create_scaler(path):
         for m in Markers_to_drop:
             df = df.drop(m, axis=1)
 
-        # 座標系の変換
-        df = world_to_local(df)
+        # ローカル座標系への変換
+        if coordinate == "LOCAL":
+             df = world_to_local(df)
 
         # ndarrayに変換
         ndarr = df.to_numpy()
+
+        # 極座標への変換
+        if coordinate == "POLAR":
+            ndarr = convert_logscaled_polar(ndarr)
 
         # 速度を計算
         pos_t = ndarr.T
@@ -165,59 +144,118 @@ def create_scaler(path):
 
     scaler = StandardScaler()
     scaler.fit(tofit)
+    print("############################ Scaler Creation Done #############################")
 
     return scaler
 
 
-def load_scaler():
-    with open(SCALER_PATH, "rb") as f:
+def load_scaler(scaler_path):
+    with open(scaler_path, "rb") as f:
         s = pickle.load(f)
 
     return s
 
 
-def main():
-    print("OPTION:", DATASET)
-    # CSVファイル読み込み
-    path = glob.glob(DATA_DIR + "*.csv")
-    # print(path)
+def convert_logscaled_polar(data, origin=(0, 0, 0)):
+    # 3次元直交座標系を引数座標originを中心とする極座標系に変換
+    # 距離軸rは自然対数でスケールされる
+    # 回転はそのまま
+    x = origin[0] - data[:, 3::6]
+    y = origin[1] - data[:, 4::6]
+    z = origin[2] - data[:, 5::6]
 
-    if DATASET == "TEST":
-        scaler = load_scaler()
+    r = np.sqrt(x ** 2 + y ** 2 + z ** 2)
+    theta = np.arccos(z / r)
+    phi = np.arctan(y / x)
+
+    data[:, 3::6] = np.log(r)
+    data[:, 4::6] = theta
+    data[:, 5::6] = phi
+
+    return data
+
+
+def create_dataset(sub_id, dataset_type, coordinate):
+    scaler_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + sub_id + "/" + sub_id + "_scaler.pkl"
+
+    if "TRAIN" in dataset_type:
+        print("-TRAIN-")
+        data_dir = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/TRAIN/"
+        out_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/" + sub_id + "_TRAIN.pkl"
+
+        path = glob.glob(data_dir + "*.csv")
+
+        scaler = create_scaler(path, coordinate)
+        for index, csv in enumerate(path):
+            print(csv)
+            df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
+            if index == 0:
+                out = df_to_cp(df, scaler, coordinate)
+            else:
+                out = cp.concatenate([out, df_to_cp(df, scaler, coordinate)])
+
+        print(out_path, out.shape)
+        pickle.dump(out, open(out_path, "wb"))
+        pickle.dump(scaler, open(scaler_path, "wb"))
+
+    if "TEST" in dataset_type:
+        print("-TEST-")
+        data_dir = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/TEST/"
+        out_dir = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/"
+
+        path = glob.glob(data_dir + "*.csv")
+
+        scaler = load_scaler(scaler_path)
         for index, csv in enumerate(path):
             print(csv, " ", end="")
             df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
-            out_path = OUT_DIR + os.path.splitext(os.path.basename(csv))[0] + ".pkl"
-            out = df_to_cp(df, scaler)
+            out_path = out_dir + os.path.splitext(os.path.basename(csv))[0] + ".pkl"
+            out = df_to_cp(df, scaler, coordinate)
             print(out.shape)
             pickle.dump(out, open(out_path, "wb"))
 
-    if DATASET == "TRAIN":
-        scaler = create_scaler(path)
+
+    if "VALID" in dataset_type:
+        print("-VALID-")
+        data_dir = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/TEST/"
+        out_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + sub_id + "/" + sub_id + "_VALID.pkl"
+
+        global STEP_SIZE
+        STEP_SIZE = STEP_SIZE * 15
+
+        scaler = load_scaler(scaler_path)
+        path = glob.glob(data_dir + "*.csv")
+
         for index, csv in enumerate(path):
-            print(csv, " ", end="")
+            # print(csv, " ", end="")
             df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
             if index == 0:
-                out = df_to_cp(df, scaler)
+                out = df_to_cp(df, scaler, coordinate)
             else:
-                out = cp.concatenate([out, df_to_cp(df, scaler)])
-            print(out.shape)
+                out = cp.concatenate([out, df_to_cp(df, scaler, coordinate)])
+        print(out_path, out.shape)
 
-        pickle.dump(out, open(OUT_PATH, "wb"))
-        pickle.dump(scaler, open(SCALER_PATH, "wb"))
+        pickle.dump(out, open(out_path, "wb"))
 
-    if DATASET == "VALID":
-        scaler = load_scaler()
-        for index, csv in enumerate(path):
-            print(csv, " ", end="")
-            df = pd.read_csv(csv, skiprows=3, header=[0, 2, 3], index_col=0)
-            if index == 0:
-                out = df_to_cp(df, scaler)
-            else:
-                out = cp.concatenate([out, df_to_cp(df, scaler)])
-            print(out.shape)
 
-        pickle.dump(out, open(OUT_PATH, "wb"))
+def main():
+    parser = argparse.ArgumentParser(description='OptiTrackからの出力CSVを読み込み、EncDecADへの入力(Cupy Seqences)に変換')
+    parser.add_argument('-dataset_type', default=["TRAIN", "VALID", "TEST"], help='TRAIN/VALID/TEST　のいずれかのリスト')
+    # parser.add_argument('-subject_id', default=["T1_1109", "S1_1112", "H1_1202", "E1_1203"], help='被験者IDのリスト')
+    parser.add_argument('-subject_id', default=["N1_1008"], help='被験者IDのリスト')
+    parser.add_argument('-coordinate', default="POLAR", help='POLAR(レンジを中心としたlog-scaled 極座標) or LOCAL(腰を中心にした座標系)',
+                        choices=["POLAR", "LOCAL"])
+    args = parser.parse_args()
+
+    print("DATASET TYPE:", args.dataset_type)
+    print("SUBJECTS:", args.subject_id)
+    print("COORDINATE TYPE:", args.coordinate)
+
+    for sub_id in args.subject_id:
+        print("\n******************************************************")
+        print("********************   "+sub_id+"   *********************")
+        print("******************************************************")
+        create_dataset(sub_id, args.dataset_type, args.coordinate)
 
 
 if __name__ == "__main__":
