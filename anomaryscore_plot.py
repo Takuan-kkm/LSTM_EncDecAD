@@ -70,7 +70,7 @@ def main():
         task4_2 = pickle.load(f)
 
     # Load network
-    with open("result_2048units/model.pkl", "rb") as f:
+    with open("result_polar/model.pkl", "rb") as f:
         net = pickle.load(f)
 
     net.train = False
@@ -134,8 +134,20 @@ def main():
     score_plot(score_task4_2, label="task4_2")
 
     # save result
-    # with open("ascore_normal", "wb") as f:
-    #     pickle.dump(score_normal, f)
+    with open("ascore_task1_1.pkl", "wb") as f:
+        pickle.dump(score_task1_1, f)
+    with open("ascore_task1_2.pkl", "wb") as f:
+        pickle.dump(score_task1_2, f)
+    with open("ascore_task2_1.pkl", "wb") as f:
+        pickle.dump(score_task2_1, f)
+    with open("ascore_task2_2.pkl", "wb") as f:
+        pickle.dump(score_task2_2, f)
+    with open("ascore_task3_1.pkl", "wb") as f:
+        pickle.dump(score_task3_1, f)
+    with open("ascore_task3_2.pkl", "wb") as f:
+        pickle.dump(score_task3_2, f)
+    with open("ascore_task4_1.pkl", "wb") as f:
+        pickle.dump(score_task4_1, f)
     # with open("ascore_confuse.pkl", "wb") as f:
     #     pickle.dump(score_confuse, f)
 
