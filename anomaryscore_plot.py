@@ -6,16 +6,16 @@ import numpy as np
 
 import os
 
-SUBJECT_ID = "TEST_SHINCHAN_1112"
-ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task1_1.pkl"
-ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task1_2.pkl"
-ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task2_1.pkl"
-ptask2_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task2_2.pkl"
-ptask3_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task3_1.pkl"
-ptask3_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task3_2.pkl"
-ptask4_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task4_1.pkl"
-ptask4_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/task4_2.pkl"
-normal_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_TRAIN.pkl"
+SUBJECT_ID = "E1_1203"
+ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_1.pkl"
+ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_2.pkl"
+ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task2_1.pkl"
+ptask2_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task2_2.pkl"
+ptask3_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task3_1.pkl"
+ptask3_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task3_2.pkl"
+ptask4_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task4_1.pkl"
+ptask4_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task4_2.pkl"
+normal_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/" + SUBJECT_ID + "_TRAIN.pkl"
 
 
 def score_plot(score, label="score"):
@@ -32,7 +32,7 @@ def score_plot(score, label="score"):
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(xl, score, label=label)
-    ax.set_ylim([0, 10000])
+    ax.set_ylim([0, 1000])
     ax.set_xlim([0, len(score) * skiprate / samplerate])
     ax.set_xlabel("time[sec]")
     ax.set_ylabel("anomary score")
