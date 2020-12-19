@@ -32,7 +32,7 @@ def score_plot(score, label="score"):
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(xl, score, label=label)
-    ax.set_ylim([0, 1000])
+    ax.set_ylim([0, 4000])
     ax.set_xlim([0, len(score) * skiprate / samplerate])
     ax.set_xlabel("time[sec]")
     ax.set_ylabel("anomary score")

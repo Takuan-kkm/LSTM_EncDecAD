@@ -109,38 +109,8 @@ class plot_TL():
         self.hits_barh.remove()
         self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
 
-    def hits_true(self):  # セコくないほう
-        self.ls_hits = []
-        if len(self.ls_confusion) == 0:
-            return None
-
-        for c in self.ls_confusion:
-            for gt in self.GT:
-                if c is None:
-                    break
-                if c[0] >= gt[0] + gt[1]:
-                    continue
-                if c[0] + c[1] <= gt[0]:
-                    continue
-
-                if c[0] >= gt[0]:
-                    if c[0] + c[1] <= gt[0] + gt[1]:
-                        self.ls_hits.append(c)
-                    else:
-                        self.ls_hits.append([c[0], gt[0] + gt[1] - c[0]])
-                else:
-                    if c[0] + c[1] <= gt[0] + gt[1]:
-                        self.ls_hits.append([gt[0], c[0] + c[1] - gt[0]])
-                    else:
-                        self.ls_hits.append(gt)
-
-        self.hits_barh.remove()
-        self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
-
     def false_alarm(self):
         self.ls_fa = []
-        if len(self.ls_confusion) == 0:
-            return None
 
         for c in self.ls_confusion:
             for gt in self.GT:
@@ -206,52 +176,50 @@ class plot_TL():
         return self.confusion_matrix()
 
 
-def sss(task, coordinate, subject):
-    with open("resource/" + coordinate + "/" + subject + "/ascore_task" + task + ".pkl", "rb") as f:
+def sss(subject_id, task, coordinate):
+    with open("resource/" + coordinate + "/ascore_task" + task + ".pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "E1_1203" + "/task" + task + ".csv"
-    groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject_id + "/task" + task + ".csv"
+    try:
+        groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
+    except Exception as e:
+        groundtruth = None
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
-    return ptl.get_confusion_matrix(800)
+    return ptl.get_confusion_matrix(2300)
 
 
 def main():
     coordinate = "POLAR"
-    subject_id = "S1_1112"
+    subject = "E1_1203"
 
-    with open("resource/" + coordinate + "/" + subject_id + "/ascore_task2_1.pkl", "rb") as f:
+    with open("../ascore_task4_1.pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject_id + "/task2_1.csv"
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "S1_1112" + "/task3_1.csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
-    # ptl = plot_TL(groundtruth=groundtruth, score=score)
-    # ptl.show()
-    # exit()
+    ptl = plot_TL(groundtruth=groundtruth, score=score)
+    ptl.show()
 
-    result = []
-    result.append(sss("1_1", coordinate, subject_id))
-    #result.append(sss("1_2", coordinate, subject_id))
-    result.append(sss("2_1", coordinate, subject_id))
-    #result.append(sss("2_2", coordinate, subject_id))
-    result.append(sss("3_1", coordinate, subject_id))
-    #result.append(sss("3_2", coordinate, subject_id))
-    result.append(sss("4_1", coordinate, subject_id))
-    #result.append(sss("4_2", coordinate, subject_id))
-
-    TP = sum([i[0] for i in result])
-    TN = sum([i[1] for i in result])
-    FP = sum([i[2] for i in result])
-    FN = sum([i[3] for i in result])
-
-    lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
-    recall = TP / (TP + FN)
-    presicion = TP / (TP + FP)
-    f_score = 2 * recall * presicion / (recall + presicion)
-    print(TP, TN, FP, FN)
-    print(f_score)
+    # result = []
+    # result.append(sss(subject, "1_1", coordinate))
+    # result.append(sss(subject, "2_1", coordinate))
+    # result.append(sss(subject, "2_2", coordinate))
+    # result.append(sss(subject, "3_1", coordinate))
+    # result.append(sss(subject, "3_2", coordinate))
+    # result.append(sss(subject, "4_1", coordinate))
+    # result.append(sss(subject, "4_2, coordinate))
+    #
+    # TP = sum([i[0] for i in result])
+    # TN = sum([i[1] for i in result])
+    # FP = sum([i[2] for i in result])
+    # FN = sum([i[3] for i in result])
+    #
+    # lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
+    # print(TP,TN,FP,FN)
+    # print(lm)
 
 
 if __name__ == "__main__":
