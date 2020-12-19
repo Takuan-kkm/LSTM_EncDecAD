@@ -187,12 +187,12 @@ def sss(subject_id, task, coordinate):
 
 def main():
     coordinate = "POLAR"
-    subject = "E1_1203"
+    subject = "A1_1217"
 
     with open("../ascore_task4_1.pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "S1_1112" + "/task3_1.csv"
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject + "/task2_1.csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
