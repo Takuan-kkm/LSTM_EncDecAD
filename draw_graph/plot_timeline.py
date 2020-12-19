@@ -109,6 +109,34 @@ class plot_TL():
         self.hits_barh.remove()
         self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
 
+    def hits_true(self):  # セコくないほう
+        self.ls_hits = []
+        if len(self.ls_confusion) == 0:
+            return None
+
+        for c in self.ls_confusion:
+            for gt in self.GT:
+                if c is None:
+                    break
+                if c[0] >= gt[0] + gt[1]:
+                    continue
+                if c[0] + c[1] <= gt[0]:
+                    continue
+
+                if c[0] >= gt[0]:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append(c)
+                    else:
+                        self.ls_hits.append([c[0], gt[0] + gt[1] - c[0]])
+                else:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append([gt[0], c[0] + c[1] - gt[0]])
+                    else:
+                        self.ls_hits.append(gt)
+
+        self.hits_barh.remove()
+        self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
+
     def false_alarm(self):
         self.ls_fa = []
 
