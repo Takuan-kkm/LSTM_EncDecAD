@@ -6,7 +6,7 @@ import numpy as np
 
 import os
 
-SUBJECT_ID = "E1_1203"
+SUBJECT_ID = "S1_1112"
 ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_1.pkl"
 ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_2.pkl"
 ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task2_1.pkl"
@@ -32,7 +32,7 @@ def score_plot(score, label="score"):
     fig = plt.figure(figsize=[15, 5])
     ax = fig.add_subplot(111)
     ax.plot(xl, score, label=label)
-    ax.set_ylim([0, 1000])
+    ax.set_ylim([0, 4000])
     ax.set_xlim([0, len(score) * skiprate / samplerate])
     ax.set_xlabel("time[sec]")
     ax.set_ylabel("anomary score")
@@ -70,7 +70,7 @@ def main():
         task4_2 = pickle.load(f)
 
     # Load network
-    with open("result_polar/model.pkl", "rb") as f:
+    with open("result/model.pkl", "rb") as f:
         net = pickle.load(f)
 
     net.train = False

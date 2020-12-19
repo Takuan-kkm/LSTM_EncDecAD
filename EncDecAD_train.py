@@ -20,7 +20,7 @@ SUBJECT_ID = "TEST_SHUTARO_1109"  # temporary variable
 TEST_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_VALID.pkl"  # temporary variable
 TRAIN_PATH = os.environ["ONEDRIVE"] + "/研究/2020実験データ/BIN/" + SUBJECT_ID + "_TRAIN.pkl"  # temporary variable
 
-SUBJECTS = ["T1_1109", "S1_1112", "H1_1202", "E1_1203", "N1_1008"]
+SUBJECTS = ["T1_1109", "S1_1112", "H1_1202", "E1_1203", "N1_1008", "A1_1217", "Y1_1217"]
 
 
 def pkl_read(subjects, train=True):
@@ -49,7 +49,7 @@ def main():
     parser = argparse.ArgumentParser(description='Chainer LSTM Network')
     parser.add_argument('--batchsize', '-b', type=int, default=256,
                         help='Number of images in each mini-batch')
-    parser.add_argument('--epoch', '-e', type=int, default=100,
+    parser.add_argument('--epoch', '-e', type=int, default=150,
                         help='Number of sweeps over the dataset to train')
     parser.add_argument('--frequency', '-f', type=int, default=150,
                         help='Frequency of taking a snapshot')

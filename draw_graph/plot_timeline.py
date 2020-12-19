@@ -9,7 +9,7 @@ class plot_TL():
     window = 3
     _samplerate = 125
     _skiprate = 5
-    rate = _skiprate / _samplerate*3
+    rate = _skiprate / _samplerate * 3
 
     def __init__(self, groundtruth, score):
         self.GT = groundtruth
@@ -171,12 +171,15 @@ class plot_TL():
         return self.confusion_matrix()
 
 
-def sss(task, coordinate):
+def sss(subject_id, task, coordinate):
     with open("resource/" + coordinate + "/ascore_task" + task + ".pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "E1_1203" + "/task" + task + ".csv"
-    groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject_id + "/task" + task + ".csv"
+    try:
+        groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
+    except Exception as e:
+        groundtruth = None
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
     return ptl.get_confusion_matrix(2300)
@@ -184,24 +187,25 @@ def sss(task, coordinate):
 
 def main():
     coordinate = "POLAR"
+    subject = "E1_1203"
 
-    with open("resource/" + coordinate + "/ascore_task4_1.pkl", "rb") as f:
+    with open("../ascore_task4_1.pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "E1_1203" + "/task4_1.csv"
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "S1_1112" + "/task3_1.csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
     ptl.show()
 
-
     # result = []
-    # result.append(sss("1_1", coordinate))
-    # result.append(sss("2_1", coordinate))
-    # result.append(sss("2_2", coordinate))
-    # result.append(sss("3_1", coordinate))
-    # result.append(sss("3_2", coordinate))
-    # result.append(sss("4_1", coordinate))
+    # result.append(sss(subject, "1_1", coordinate))
+    # result.append(sss(subject, "2_1", coordinate))
+    # result.append(sss(subject, "2_2", coordinate))
+    # result.append(sss(subject, "3_1", coordinate))
+    # result.append(sss(subject, "3_2", coordinate))
+    # result.append(sss(subject, "4_1", coordinate))
+    # result.append(sss(subject, "4_2, coordinate))
     #
     # TP = sum([i[0] for i in result])
     # TN = sum([i[1] for i in result])
