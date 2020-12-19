@@ -9,13 +9,13 @@ class plot_TL():
     window = 3
     _samplerate = 125
     _skiprate = 5
-    rate = _skiprate / _samplerate*3
+    rate = _skiprate / _samplerate
 
     def __init__(self, groundtruth, score):
         self.GT = groundtruth
 
         w = np.ones(self.window) / self.window
-        self.score = np.convolve(score, w, mode="same")[::3]
+        self.score = np.convolve(score, w, mode="same")[::]
         xl = [i * self.rate for i in range(self.score.shape[0])]
         self.fig = plt.figure(figsize=(15, 8))
         self.ax = self.fig.add_subplot(211)
@@ -38,7 +38,7 @@ class plot_TL():
         plt.connect('motion_notify_event', self.motion)
 
     def init_fig(self):
-        self.ax.set_ylim([0, 4000])
+        self.ax.set_ylim([0, 10000])
         self.ax.set_xlim([0, len(self.score) * self.rate])
         self.ax.set_xlabel("time[sec]")
         self.ax.set_ylabel("anomary score")
@@ -77,7 +77,7 @@ class plot_TL():
             y = event.ydata
             self.ln_threshold.set_ydata(y)
             self.confusions(y)
-            self.hits()
+            self.hits_true()
             self.false_alarm()
             print(self.calc_leeliu_metric(), "\n")
 
@@ -109,8 +109,38 @@ class plot_TL():
         self.hits_barh.remove()
         self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
 
+    def hits_true(self):  # セコくないほう
+        self.ls_hits = []
+        if len(self.ls_confusion) == 0:
+            return None
+
+        for c in self.ls_confusion:
+            for gt in self.GT:
+                if c is None:
+                    break
+                if c[0] >= gt[0] + gt[1]:
+                    continue
+                if c[0] + c[1] <= gt[0]:
+                    continue
+
+                if c[0] >= gt[0]:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append(c)
+                    else:
+                        self.ls_hits.append([c[0], gt[0] + gt[1] - c[0]])
+                else:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append([gt[0], c[0] + c[1] - gt[0]])
+                    else:
+                        self.ls_hits.append(gt)
+
+        self.hits_barh.remove()
+        self.hits_barh = self.ax2.broken_barh(self.ls_hits, (14, 2), facecolors='blue')
+
     def false_alarm(self):
         self.ls_fa = []
+        if len(self.ls_confusion) == 0:
+            return None
 
         for c in self.ls_confusion:
             for gt in self.GT:
@@ -141,17 +171,22 @@ class plot_TL():
 
     def calc_leeliu_metric(self):
         TP, TN, FP, FN = self.confusion_matrix()
-        # recall = TP/(TP+FN)
+        recall = TP / (TP + FN)
+        presicion = TP / (TP + FP)
         # prfx_1 = (TP+FP)/(TP+FP+FN+TN)
         # lm = (recall**2)/prfx_1
+        f_score = 2 * recall * presicion / (recall + presicion)
         lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
-        return lm
+        return f_score
 
     def confusion_matrix(self):
+        # 異常:Negative
         # TN = sum([i[1] for i in self.ls_hits])
         # FN = sum([i[1] for i in self.ls_fa])
         # FP = sum(self.GT[:, 1]) - TN
         # TP = self.score.shape[0] * self.rate - TN - FN - FP
+
+        # 異常:Positive
         TP = sum([i[1] for i in self.ls_hits])
         FP = sum([i[1] for i in self.ls_fa])
         FN = sum(self.GT[:, 1]) - TP
@@ -171,46 +206,52 @@ class plot_TL():
         return self.confusion_matrix()
 
 
-def sss(task, coordinate):
-    with open("resource/" + coordinate + "/ascore_task" + task + ".pkl", "rb") as f:
+def sss(task, coordinate, subject):
+    with open("resource/" + coordinate + "/" + subject + "/ascore_task" + task + ".pkl", "rb") as f:
         score = pickle.load(f)
 
     gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "E1_1203" + "/task" + task + ".csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
-    return ptl.get_confusion_matrix(2300)
+    return ptl.get_confusion_matrix(800)
 
 
 def main():
     coordinate = "POLAR"
+    subject_id = "S1_1112"
 
-    with open("resource/" + coordinate + "/ascore_task4_1.pkl", "rb") as f:
+    with open("resource/" + coordinate + "/" + subject_id + "/ascore_task2_1.pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + "E1_1203" + "/task4_1.csv"
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject_id + "/task2_1.csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
-    ptl = plot_TL(groundtruth=groundtruth, score=score)
-    ptl.show()
+    # ptl = plot_TL(groundtruth=groundtruth, score=score)
+    # ptl.show()
+    # exit()
 
+    result = []
+    result.append(sss("1_1", coordinate, subject_id))
+    #result.append(sss("1_2", coordinate, subject_id))
+    result.append(sss("2_1", coordinate, subject_id))
+    #result.append(sss("2_2", coordinate, subject_id))
+    result.append(sss("3_1", coordinate, subject_id))
+    #result.append(sss("3_2", coordinate, subject_id))
+    result.append(sss("4_1", coordinate, subject_id))
+    #result.append(sss("4_2", coordinate, subject_id))
 
-    # result = []
-    # result.append(sss("1_1", coordinate))
-    # result.append(sss("2_1", coordinate))
-    # result.append(sss("2_2", coordinate))
-    # result.append(sss("3_1", coordinate))
-    # result.append(sss("3_2", coordinate))
-    # result.append(sss("4_1", coordinate))
-    #
-    # TP = sum([i[0] for i in result])
-    # TN = sum([i[1] for i in result])
-    # FP = sum([i[2] for i in result])
-    # FN = sum([i[3] for i in result])
-    #
-    # lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
-    # print(TP,TN,FP,FN)
-    # print(lm)
+    TP = sum([i[0] for i in result])
+    TN = sum([i[1] for i in result])
+    FP = sum([i[2] for i in result])
+    FN = sum([i[3] for i in result])
+
+    lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
+    recall = TP / (TP + FN)
+    presicion = TP / (TP + FP)
+    f_score = 2 * recall * presicion / (recall + presicion)
+    print(TP, TN, FP, FN)
+    print(f_score)
 
 
 if __name__ == "__main__":
