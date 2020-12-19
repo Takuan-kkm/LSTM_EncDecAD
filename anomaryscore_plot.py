@@ -124,14 +124,14 @@ def main():
     # print("confuse:", len(score_confuse))
 
     # score_plot(score_normal, label="normal")
-    score_plot(score_task1_1, label="task1_1")
-    score_plot(score_task1_2, label="task1_2")
-    score_plot(score_task2_1, label="task2_1")
-    score_plot(score_task2_2, label="task2_2")
-    score_plot(score_task3_1, label="task3_1")
-    score_plot(score_task3_2, label="task3_2")
-    score_plot(score_task4_1, label="task4_1")
-    score_plot(score_task4_2, label="task4_2")
+    # score_plot(score_task1_1, label="task1_1")
+    # score_plot(score_task1_2, label="task1_2")
+    # score_plot(score_task2_1, label="task2_1")
+    # score_plot(score_task2_2, label="task2_2")
+    # score_plot(score_task3_1, label="task3_1")
+    # score_plot(score_task3_2, label="task3_2")
+    # score_plot(score_task4_1, label="task4_1")
+    # score_plot(score_task4_2, label="task4_2")
 
     # save result
     with open("ascore_task1_1.pkl", "wb") as f:
@@ -148,6 +148,8 @@ def main():
         pickle.dump(score_task3_2, f)
     with open("ascore_task4_1.pkl", "wb") as f:
         pickle.dump(score_task4_1, f)
+    with open("ascore_task4_2.pkl", "wb") as f:
+        pickle.dump(score_task4_2, f)
     # with open("ascore_confuse.pkl", "wb") as f:
     #     pickle.dump(score_confuse, f)
 

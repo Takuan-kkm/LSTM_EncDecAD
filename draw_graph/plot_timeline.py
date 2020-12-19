@@ -9,13 +9,13 @@ class plot_TL():
     window = 3
     _samplerate = 125
     _skiprate = 5
-    rate = _skiprate / _samplerate * 3
+    rate = _skiprate / _samplerate
 
     def __init__(self, groundtruth, score):
         self.GT = groundtruth
 
         w = np.ones(self.window) / self.window
-        self.score = np.convolve(score, w, mode="same")[::3]
+        self.score = np.convolve(score, w, mode="same")[::]
         xl = [i * self.rate for i in range(self.score.shape[0])]
         self.fig = plt.figure(figsize=(15, 8))
         self.ax = self.fig.add_subplot(211)
@@ -38,7 +38,7 @@ class plot_TL():
         plt.connect('motion_notify_event', self.motion)
 
     def init_fig(self):
-        self.ax.set_ylim([0, 4000])
+        self.ax.set_ylim([0, 10000])
         self.ax.set_xlim([0, len(self.score) * self.rate])
         self.ax.set_xlabel("time[sec]")
         self.ax.set_ylabel("anomary score")
@@ -77,7 +77,7 @@ class plot_TL():
             y = event.ydata
             self.ln_threshold.set_ydata(y)
             self.confusions(y)
-            self.hits()
+            self.hits_true()
             self.false_alarm()
             print(self.calc_leeliu_metric(), "\n")
 
@@ -141,17 +141,22 @@ class plot_TL():
 
     def calc_leeliu_metric(self):
         TP, TN, FP, FN = self.confusion_matrix()
-        # recall = TP/(TP+FN)
+        recall = TP / (TP + FN)
+        presicion = TP / (TP + FP)
         # prfx_1 = (TP+FP)/(TP+FP+FN+TN)
         # lm = (recall**2)/prfx_1
+        f_score = 2 * recall * presicion / (recall + presicion)
         lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
-        return lm
+        return f_score
 
     def confusion_matrix(self):
+        # 異常:Negative
         # TN = sum([i[1] for i in self.ls_hits])
         # FN = sum([i[1] for i in self.ls_fa])
         # FP = sum(self.GT[:, 1]) - TN
         # TP = self.score.shape[0] * self.rate - TN - FN - FP
+
+        # 異常:Positive
         TP = sum([i[1] for i in self.ls_hits])
         FP = sum([i[1] for i in self.ls_fa])
         FN = sum(self.GT[:, 1]) - TP
