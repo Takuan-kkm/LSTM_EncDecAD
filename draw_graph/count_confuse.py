@@ -1,3 +1,7 @@
+########################################
+# とまどいの種類別の秒数・回数をユーザ毎に計算 #
+########################################
+
 import glob
 import pandas as pd
 import os
@@ -13,8 +17,8 @@ for sub in SUBJECTS:
               "question": {"count": 0, "length": 0}, "wandering_hands": {"count": 0, "length": 0},
               "other": {"count": 0, "length": 0}}
 
-    dir = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + sub + "/*.csv"
-    csv = glob.glob(dir)
+    csv = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + sub + "/*.csv"
+    csv = glob.glob(csv)
 
     for c in csv:
         df = pd.read_csv(c, header=None, index_col=None)
