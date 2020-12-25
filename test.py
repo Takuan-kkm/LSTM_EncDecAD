@@ -1,8 +1,14 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from sklearn.metrics import roc_curve
+from sklearn.metrics import roc_auc_score
+import os
+import pandas as pd
 
-x = np.linspace(0, 10, 1000)
-y = np.exp(x)-1
-z = 10000*np.exp(-x)*np.sin(x*10)
-plt.plot(x, z+y)
-plt.show()
+subject = "T1_1109"
+task = "4_1"
+
+gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject + "/task" + task + ".csv"
+groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:]
+
+print(groundtruth)

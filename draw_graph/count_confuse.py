@@ -10,6 +10,10 @@ pd.set_option('display.max_columns', 1000)
 pd.set_option('display.width', 1000)
 
 SUBJECTS = ["T1_1109", "S1_1112", "H1_1202", "E1_1203", "N1_1008", "A1_1217", "Y1_1217"]
+result_all = {"turn_around": {"count": 0, "length": 0}, "experienced_error": {"count": 0, "length": 0},
+              "inactivity": {"count": 0, "length": 0}, "blind_press": {"count": 0, "length": 0},
+              "question": {"count": 0, "length": 0}, "wandering_hands": {"count": 0, "length": 0},
+              "other": {"count": 0, "length": 0}, "total": {"count": 0, "length": 0}}
 
 for sub in SUBJECTS:
     result = {"turn_around": {"count": 0, "length": 0}, "experienced_error": {"count": 0, "length": 0},
@@ -57,3 +61,11 @@ for sub in SUBJECTS:
     result = pd.DataFrame(result)
     print("#################", sub, "#####################")
     print(result, "\n")
+
+    for key in result:
+        result_all[key]["count"] += result[key]["count"]
+        result_all[key]["length"] += result[key]["length"]
+
+print("################# all #####################")
+result_all = pd.DataFrame(result_all)
+print(result_all, "\n")

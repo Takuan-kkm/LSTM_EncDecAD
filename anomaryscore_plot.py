@@ -6,7 +6,7 @@ import numpy as np
 
 import os
 
-SUBJECT_ID = "A1_1217"
+SUBJECT_ID = "N1_1008"
 ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_1.pkl"
 ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_2.pkl"
 ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task2_1.pkl"

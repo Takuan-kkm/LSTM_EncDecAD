@@ -38,7 +38,8 @@ class plot_TL():
         plt.connect('motion_notify_event', self.motion)
 
     def init_fig(self):
-        self.ax.set_ylim([0, 10000])
+        # self.ax.set_yscale("log")
+        self.ax.set_ylim([0, 7500])
         self.ax.set_xlim([0, len(self.score) * self.rate])
         self.ax.set_xlabel("time[sec]")
         self.ax.set_ylabel("anomary score")
@@ -77,7 +78,7 @@ class plot_TL():
             y = event.ydata
             self.ln_threshold.set_ydata(y)
             self.confusions(y)
-            self.hits_true()
+            self.hits()
             self.false_alarm()
             print(self.calc_leeliu_metric(), "\n")
 
@@ -204,50 +205,64 @@ class plot_TL():
         return self.confusion_matrix()
 
 
-def sss(subject_id, task, coordinate):
-    with open("resource/" + coordinate + "/ascore_task" + task + ".pkl", "rb") as f:
-        score = pickle.load(f)
-
+def sss(subject_id, task):
     gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject_id + "/task" + task + ".csv"
     try:
+        with open("resource/" + subject_id + "/ascore_task" + task + ".pkl", "rb") as f:
+            score = pickle.load(f)
         groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
     except Exception as e:
-        groundtruth = None
+        return None
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
-    return ptl.get_confusion_matrix(2300)
+    return ptl.get_confusion_matrix(750)
 
 
 def main():
-    coordinate = "POLAR"
-    subject = "A1_1217"
-
-    with open("../ascore_task4_1.pkl", "rb") as f:
+    subject = "H1_1202"
+    task = "2_2"
+    #
+    with open("resource/" + subject + "/ascore_task" + task + ".pkl", "rb") as f:
         score = pickle.load(f)
 
-    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject + "/task2_1.csv"
+    gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + subject + "/task" + task + ".csv"
     groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:4]
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
     ptl.show()
 
-    # result = []
-    # result.append(sss(subject, "1_1", coordinate))
-    # result.append(sss(subject, "2_1", coordinate))
-    # result.append(sss(subject, "2_2", coordinate))
-    # result.append(sss(subject, "3_1", coordinate))
-    # result.append(sss(subject, "3_2", coordinate))
-    # result.append(sss(subject, "4_1", coordinate))
-    # result.append(sss(subject, "4_2, coordinate))
-    #
-    # TP = sum([i[0] for i in result])
-    # TN = sum([i[1] for i in result])
-    # FP = sum([i[2] for i in result])
-    # FN = sum([i[3] for i in result])
-    #
-    # lm = (TP * (TP + TN + FP + FN)) / ((TP + FP) * (TP + FN) ** 2)
-    # print(TP,TN,FP,FN)
-    # print(lm)
+    result = []
+    if sss(subject, "1_1") is not None:
+        result.append(sss(subject, "1_1"))
+    if sss(subject, "1_2") is not None:
+        result.append(sss(subject, "1_2"))
+    if sss(subject, "2_1") is not None:
+        result.append(sss(subject, "2_1"))
+    if sss(subject, "2_2") is not None:
+        result.append(sss(subject, "2_2"))
+    if sss(subject, "3_1") is not None:
+        result.append(sss(subject, "3_1"))
+    if sss(subject, "3_2") is not None:
+        result.append(sss(subject, "3_2"))
+    if sss(subject, "4_1") is not None:
+        result.append(sss(subject, "4_1"))
+    if sss(subject, "4_2") is not None:
+        result.append(sss(subject, "4_2"))
+
+    TP = sum([i[0] for i in result])
+    TN = sum([i[1] for i in result])
+    FP = sum([i[2] for i in result])
+    FN = sum([i[3] for i in result])
+
+    recall = TP / (TP + FN)
+    presicion = TP / (TP + FP)
+    prfx_1 = (TP + FP) / (TP + FP + FN + TN)
+    lm = (recall ** 2) / prfx_1
+    f_score = 2 * recall * presicion / (recall + presicion)
+    print("\n", TP, TN, FP, FN)
+    # print("HR:", FP / (FP + TN))
+    print("FAR:", FP / (FP + TN))
+    print("f1 score", f_score)
 
 
 if __name__ == "__main__":
