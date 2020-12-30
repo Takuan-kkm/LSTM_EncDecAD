@@ -22,19 +22,27 @@ for sub in SUBJECTS:
     train = 0
     test = 0
     total = 0
+    no_train = 0
+    no_test = 0
     for c in csv_train:
+        no_train += 1
         df = pd.read_csv(c, header=0, skiprows=7)
         train += df.shape[0] / SAMPLE_RATE
 
     for c in csv_test:
+        no_test += 1
         df = pd.read_csv(c, header=0, skiprows=7)
         test += df.shape[0] / SAMPLE_RATE
 
-    result[sub] = {"train": train, "test": test, "total": train + test}
+    result[sub] = {"train(sec)": train, "test(sec)": test, "No. of TrainTasks": no_train, "No. of TestTasks": no_test,
+                   "total(sec)": train + test}
 
-total_train = sum([result[r]["train"] for r in result])
-total_test = sum([result[r]["test"] for r in result])
-result["all"] = {"train": total_train, "test": total_test, "total": total_test + total_train}
+total_train = sum([result[r]["train(sec)"] for r in result])
+total_test = sum([result[r]["test(sec)"] for r in result])
+total_notrain = sum([result[r]["No. of TrainTasks"] for r in result])
+total_notest = sum([result[r]["No. of TestTasks"] for r in result])
+result["all"] = {"train(sec)": total_train, "test(sec)": total_test, "No. of TrainTasks": total_notrain,
+                 "No. of TestTasks": total_notest, "total(sec)": total_test + total_train}
 
 result = pd.DataFrame(result)
 print(result)

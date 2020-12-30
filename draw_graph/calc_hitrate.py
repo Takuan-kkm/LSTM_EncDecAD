@@ -29,19 +29,6 @@ class calc_hitrate():
         self.ls_fa = []
         self.ls_hits = []
 
-    def init_fig(self):
-        self.ax.set_ylim([0, 10000])
-        self.ax.set_xlim([0, len(self.score) * self.rate])
-        self.ax.set_xlabel("time[sec]")
-        self.ax.set_ylabel("anomary score")
-
-        self.ax2.set_ylim(2, 22)
-        self.ax2.set_xlim([0, len(self.score) * self.rate])
-        self.ax2.set_xlabel('time(sec)', fontdict={"size": 12})
-        self.ax2.set_yticks([5, 10, 15, 20])
-        self.ax2.set_yticklabels(['Ground truth', 'Confusions', 'Hits', 'False alarms'])
-        self.ax2.grid(True)
-
     def confusions(self, threshold):
         ls = []
         flag = False
@@ -62,9 +49,7 @@ class calc_hitrate():
 
         self.ls_confusion = np.array(ls) * self.rate
 
-    def hits(self, result, threshold):
-        self.confusions(threshold)
-
+    def hits(self, result=None):
         self.ls_hits = []
         if len(self.ls_confusion) == 0:
             return result
@@ -87,30 +72,56 @@ class calc_hitrate():
                 self.ls_hits.append(gt)
                 break
 
-        for h in self.ls_hits:
-            if h[2] == "turn around":
-                result["turn_around"]["count"] += 1
-                result["turn_around"]["length"] += h[1]
-            elif h[2] == "経験したことのある誤った操作":
-                result["experienced_error"]["count"] += 1
-                result["experienced_error"]["length"] += h[1]
-            elif h[2] == "動作の停止":
-                result["inactivity"]["count"] += 1
-                result["inactivity"]["length"] += h[1]
-            elif h[2] == "闇雲なボタン押下":
-                result["blind_press"]["count"] += 1
-                result["blind_press"]["length"] += h[1]
-            elif h[2] == "question":
-                result["question"]["count"] += 1
-                result["question"]["length"] += h[1]
-            elif h[2] == "手のさまよい":
-                result["wandering_hands"]["count"] += 1
-                result["wandering_hands"]["length"] += h[1]
-            elif h[2] == "other":
-                result["other"]["count"] += 1
-                result["other"]["length"] += h[1]
+        if result is not None:
+            for h in self.ls_hits:
+                if h[2] == "turn around":
+                    result["turn_around"]["count"] += 1
+                    result["turn_around"]["length"] += h[1]
+                elif h[2] == "経験したことのある誤った操作":
+                    result["experienced_error"]["count"] += 1
+                    result["experienced_error"]["length"] += h[1]
+                elif h[2] == "動作の停止":
+                    result["inactivity"]["count"] += 1
+                    result["inactivity"]["length"] += h[1]
+                elif h[2] == "闇雲なボタン押下":
+                    result["blind_press"]["count"] += 1
+                    result["blind_press"]["length"] += h[1]
+                elif h[2] == "question":
+                    result["question"]["count"] += 1
+                    result["question"]["length"] += h[1]
+                elif h[2] == "手のさまよい":
+                    result["wandering_hands"]["count"] += 1
+                    result["wandering_hands"]["length"] += h[1]
+                elif h[2] == "other":
+                    result["other"]["count"] += 1
+                    result["other"]["length"] += h[1]
 
-        return result
+            return result
+
+    def hits_true(self):  # セコくないほう
+        self.ls_hits = []
+        if len(self.ls_confusion) == 0:
+            return None
+
+        for c in self.ls_confusion:
+            for gt in self.GT:
+                if c is None:
+                    break
+                if c[0] >= gt[0] + gt[1]:
+                    continue
+                if c[0] + c[1] <= gt[0]:
+                    continue
+
+                if c[0] >= gt[0]:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append(c)
+                    else:
+                        self.ls_hits.append([c[0], gt[0] + gt[1] - c[0]])
+                else:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        self.ls_hits.append([gt[0], c[0] + c[1] - gt[0]])
+                    else:
+                        self.ls_hits.append(gt)
 
     def false_alarm(self):
         self.ls_fa = []
@@ -149,9 +160,6 @@ class calc_hitrate():
 
         return TP, TN, FP, FN
 
-    def show(self):
-        plt.show()
-
     def get_confusion_matrix(self, threshold):
         self.confusions(threshold)
         self.hits()
@@ -160,35 +168,44 @@ class calc_hitrate():
         return self.confusion_matrix()
 
 
-result = {"turn_around": {"count": 0, "length": 0}, "experienced_error": {"count": 0, "length": 0},
+rslt = {"turn_around": {"count": 0, "length": 0}, "experienced_error": {"count": 0, "length": 0},
           "inactivity": {"count": 0, "length": 0}, "blind_press": {"count": 0, "length": 0},
           "question": {"count": 0, "length": 0}, "wandering_hands": {"count": 0, "length": 0},
           "other": {"count": 0, "length": 0}}
 
-confusion_matrix = []
-TH = 4000
 
-for sub in SUBJECTS:
-    for task in TASKS:
-        try:
-            with open("resource/" + sub + "/ascore_task" + task + ".pkl", "rb") as f:  # 異常スコア読み込み
-                score = pickle.load(f)
-                score = [cp.asnumpy(s) for s in score]
-        except Exception as e:
-            continue
+def main():
+    global rslt
+    confusion_matrix = []
+    TH = 1600
 
-        gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + sub + "/task" + task + ".csv"  # ビデオ分析データ読み込み
-        # print(gt_path)
-        groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:]
-        cal = calc_hitrate(groundtruth, score)
-        result = cal.hits(result, TH)
-        cal.false_alarm()
-        confusion_matrix.append(cal.confusion_matrix())
+    for sub in SUBJECTS:
+        for task in TASKS:
+            try:
+                with open("resource/" + sub + "/ascore_task" + task + ".pkl", "rb") as f:  # 異常スコア読み込み
+                    score = pickle.load(f)
+                    score = [cp.asnumpy(s) for s in score]
+            except Exception as e:
+                continue
 
-TP = sum([i[0] for i in confusion_matrix])
-TN = sum([i[1] for i in confusion_matrix])
-FP = sum([i[2] for i in confusion_matrix])
-FN = sum([i[3] for i in confusion_matrix])
-print("FAR:", FP / (FP + TN))
-result = pd.DataFrame(result)
-print(result)
+            gt_path = os.environ["ONEDRIVE"] + "/研究/2020実験データ/ELAN/" + sub + "/task" + task + ".csv"  # ビデオ分析データ読み込み
+            # print(gt_path)
+            groundtruth = pd.read_csv(gt_path, header=None).to_numpy()[:, 2:]
+            cal = calc_hitrate(groundtruth, score)
+            cal.confusions(TH)
+            cal.false_alarm()
+            rslt = cal.hits(rslt)
+
+            confusion_matrix.append(cal.confusion_matrix())
+
+    TP = sum([i[0] for i in confusion_matrix])
+    TN = sum([i[1] for i in confusion_matrix])
+    FP = sum([i[2] for i in confusion_matrix])
+    FN = sum([i[3] for i in confusion_matrix])
+    print("FAR:", FP / (FP + TN))
+    rslt = pd.DataFrame(rslt)
+    print(rslt)
+
+
+if __name__ == "__main__":
+    main()

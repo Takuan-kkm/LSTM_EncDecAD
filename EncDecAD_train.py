@@ -98,7 +98,7 @@ def main():
     test_iter = SerialIterator(valid, args.batchsize, repeat=False)
 
     # Set up a neural network to train
-    net = EncDecAD(156, 2048)
+    net = EncDecAD(156, 1024)
     model = LSTM_MSE(net)
     model.to_device(device)
     device.use()
