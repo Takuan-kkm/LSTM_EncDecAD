@@ -43,7 +43,7 @@ def main():
         FN = sum([i[3] for i in confusion_matrix])
         recall = TP / (TP + FN)
         presicion = TP / (TP + FP)
-        SavedTimeRate = (FP + TN) / (TP + FP + TN + FN)
+        SavedTimeRate = (FN + TN) / (TP + FP + TN + FN)
         # print(TP, FP, TN, FN, TP + FP + TN + FN, SavedTimeRate)
         f_score = 2 * recall * presicion / (recall + presicion)
 

@@ -6,7 +6,7 @@ import numpy as np
 
 import os
 
-SUBJECT_ID = "N1_1008"
+SUBJECT_ID = "H1_1202"
 ptask1_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_1.pkl"
 ptask1_2 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task1_2.pkl"
 ptask2_1 = os.environ["ONEDRIVE"] + "/研究/2020実験データ/CSV_BIN/" + SUBJECT_ID + "/task2_1.pkl"
@@ -48,8 +48,8 @@ def main():
     with open(ptask1_2, "rb") as f:
         task1_2 = pickle.load(f)
 
-    with open(ptask2_1, "rb") as f:
-        task2_1 = pickle.load(f)
+    # with open(ptask2_1, "rb") as f:
+    #     task2_1 = pickle.load(f)
 
     with open(ptask2_2, "rb") as f:
         task2_2 = pickle.load(f)
@@ -96,9 +96,9 @@ def main():
     for i in task1_2:
         score_task1_2 = score_task1_2 + detector.calc_anomary_score(i)
 
-    score_task2_1 = []
-    for i in task2_1:
-        score_task2_1 = score_task2_1 + detector.calc_anomary_score(i)
+    # score_task2_1 = []
+    # for i in task2_1:
+    #     score_task2_1 = score_task2_1 + detector.calc_anomary_score(i)
 
     score_task2_2 = []
     for i in task2_2:
@@ -138,8 +138,8 @@ def main():
         pickle.dump(score_task1_1, f)
     with open("ascore_task1_2.pkl", "wb") as f:
         pickle.dump(score_task1_2, f)
-    with open("ascore_task2_1.pkl", "wb") as f:
-        pickle.dump(score_task2_1, f)
+    # with open("ascore_task2_1.pkl", "wb") as f:
+    #     pickle.dump(score_task2_1, f)
     with open("ascore_task2_2.pkl", "wb") as f:
         pickle.dump(score_task2_2, f)
     with open("ascore_task3_1.pkl", "wb") as f:

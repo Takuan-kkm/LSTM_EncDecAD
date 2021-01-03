@@ -220,7 +220,7 @@ def sss(subject_id, task):
 
 def main():
     subject = "H1_1202"
-    task = "2_2"
+    task = "4_1"
     #
     with open("resource/" + subject + "/ascore_task" + task + ".pkl", "rb") as f:
         score = pickle.load(f)
@@ -230,6 +230,7 @@ def main():
 
     ptl = plot_TL(groundtruth=groundtruth, score=score)
     ptl.show()
+    exit()
 
     result = []
     if sss(subject, "1_1") is not None:

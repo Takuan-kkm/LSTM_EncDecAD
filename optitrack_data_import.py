@@ -13,7 +13,7 @@ import argparse
 
 warnings.simplefilter("ignore")
 
-SKELETON_NAME = "Skeleton 002:"
+SKELETON_NAME = "Skeleton 003:"
 
 SEQ_LEN = 156  # 時系列データの長さ
 STEP_SIZE = 12  # 1時系列データ間の開始フレームの差
@@ -246,8 +246,8 @@ def create_dataset(sub_id, dataset_type, coordinate):
 def main():
     parser = argparse.ArgumentParser(description='OptiTrackからの出力CSVを読み込み、EncDecADへの入力(Cupy Seqences)に変換')
     parser.add_argument('-dataset_type', default=["TRAIN", "VALID", "TEST"], help='TRAIN/VALID/TEST　のいずれかのリスト')
-    # parser.add_argument('-subject_id', default=["T1_1109", "S1_1112", "H1_1202", "E1_1203", "Y1_1217", "A1_1217"], help='被験者IDのリスト')
-    parser.add_argument('-subject_id', default=["N1_1008"], help='被験者IDのリスト')
+    parser.add_argument('-subject_id', default=["T1_1109", "S1_1112", "H1_1202", "E1_1203", "Y1_1217", "A1_1217"], help='被験者IDのリスト')
+    # parser.add_argument('-subject_id', default=["N1_1008"], help='被験者IDのリスト')
     parser.add_argument('-coordinate', default="POLAR", help='POLAR(レンジを中心としたlog-scaled 極座標) or LOCAL(腰を中心にした座標系)',
                         choices=["POLAR", "LOCAL"])
     args = parser.parse_args()
