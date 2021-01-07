@@ -95,6 +95,8 @@ class calc_hitrate():
                 elif h[2] == "other":
                     result["other"]["count"] += 1
                     result["other"]["length"] += h[1]
+                elif h[2] == "not confuse":
+                    continue
 
             return result
 
@@ -150,6 +152,47 @@ class calc_hitrate():
             if c is not None:
                 self.ls_fa.append(c)
 
+    def false_alarm_for_TEST(self):
+        self.ls_fa = []
+
+        for c in self.ls_confusion:
+            if self.GT[0][2] == "not confuse":
+                if c[0] < self.GT[0][0]:
+                    if c[0] + c[1] <= self.GT[0][0]:
+                        continue
+                    else:
+                        c = [self.GT[0][0], c[0] + c[1] - self.GT[0][0]]
+
+            if self.GT[-1][2] == "not confuse":
+                if c[0] + c[1] > self.GT[-1][0]:
+                    if c[0] >= self.GT[-1][0]:
+                        continue
+                    else:
+                        c = [c[0], self.GT[-1][0] - c[0]]
+
+            for gt in self.GT:
+                if c is None:
+                    break
+                if c[0] >= gt[0] + gt[1]:
+                    continue
+                if c[0] + c[1] <= gt[0]:
+                    continue
+
+                if c[0] >= gt[0]:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        c = None
+                    else:
+                        c = [gt[0] + gt[1], c[0] + c[1] - gt[0] - gt[1]]
+                else:
+                    if c[0] + c[1] <= gt[0] + gt[1]:
+                        c = [c[0], gt[0] - c[0]]
+                    else:
+                        self.ls_fa.append([c[0], gt[0] - c[0]])
+                        c = [gt[0] + gt[1], c[0] + c[1] - gt[0] - gt[1]]
+
+            if c is not None:
+                self.ls_fa.append(c)
+
     def confusion_matrix(self):
         # 異常:Positive
         TP = sum([i[1] for i in self.ls_hits])
@@ -163,15 +206,16 @@ class calc_hitrate():
     def get_confusion_matrix(self, threshold):
         self.confusions(threshold)
         self.hits()
-        self.false_alarm()
+        self.false_alarm_for_TEST()
+        # self.false_alarm()
 
         return self.confusion_matrix()
 
 
 rslt = {"turn_around": {"count": 0, "length": 0}, "experienced_error": {"count": 0, "length": 0},
-          "inactivity": {"count": 0, "length": 0}, "blind_press": {"count": 0, "length": 0},
-          "question": {"count": 0, "length": 0}, "wandering_hands": {"count": 0, "length": 0},
-          "other": {"count": 0, "length": 0}}
+        "inactivity": {"count": 0, "length": 0}, "blind_press": {"count": 0, "length": 0},
+        "question": {"count": 0, "length": 0}, "wandering_hands": {"count": 0, "length": 0},
+        "other": {"count": 0, "length": 0}}
 
 
 def main():
